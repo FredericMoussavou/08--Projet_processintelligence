@@ -1,0 +1,24 @@
+# Environnement virtuel
+venv/
+
+# Variables d'environnement (contient les mots de passe)
+.env
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Base de données locale
+*.sqlite3
+
+# Fichiers uploadés
+media/
+
+# VSCode
+.vscode/
+
+# Fichiers système Windows
+Thumbs.db
+desktop.ini
