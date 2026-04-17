@@ -19,6 +19,8 @@ cycler==0.12.1
 cymem==2.0.13
 Django==5.0
 django-ninja==1.6.2
+djangorestframework==3.17.1
+djangorestframework_simplejwt==5.5.1
 et_xmlfile==2.0.0
 fonttools==4.62.1
 fr_core_news_md @ https://github.com/explosion/spacy-models/releases/download/fr_core_news_md-3.8.0/fr_core_news_md-3.8.0-py3-none-any.whl#sha256=8a70d090a54ef77525c3ffa6a6195b9d365f2cf369ae1cd84ede93f3d709079e
@@ -49,6 +51,7 @@ pydantic==2.13.1
 pydantic_core==2.46.1
 pydyf==0.12.1
 Pygments==2.20.0
+PyJWT==2.12.1
 pyparsing==3.3.2
 pypdfium2==5.7.0
 pyphen==0.17.2

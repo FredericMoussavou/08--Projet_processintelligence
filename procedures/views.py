@@ -15,6 +15,8 @@ from procedures.services.change_request import (
     reject_change_request, get_change_requests,
     get_change_request_status
 )
+from django.conf import settings
+from functools import wraps
 
 
 @csrf_exempt
@@ -62,6 +64,11 @@ def ingest_procedure(request):
 
     # Routage selon le type de source
     if uploaded_file:
+        if uploaded_file.size > 10 * 1024 * 1024:
+            return JsonResponse(
+                {'error': 'Fichier trop volumineux — maximum 10 Mo'},
+                status=400
+            )
         filename = uploaded_file.name.lower()
 
         if filename.endswith('.pdf'):
@@ -92,6 +99,11 @@ def ingest_procedure(request):
         if not text:
             return JsonResponse(
                 {'error': 'Champ obligatoire manquant : text ou file'},
+                status=400
+            )
+        if len(text) > 50000:
+            return JsonResponse(
+                {'error': 'Texte trop long — maximum 50 000 caractères'},
                 status=400
             )
         result = ingest_text(text, title, service, organization, owner, apply_masking)
