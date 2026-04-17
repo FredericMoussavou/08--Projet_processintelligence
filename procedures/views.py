@@ -8,6 +8,7 @@ from organizations.models import Organization
 from procedures.services.analyzer import analyze_procedure as run_analysis
 from procedures.services.exporter import generate_audit_pdf, generate_csv_template
 from procedures.services.bpmn_exporter import generate_bpmn
+from procedures.services.manual_exporter import generate_manual_pdf
 
 
 @csrf_exempt
@@ -144,4 +145,28 @@ def export_bpmn(request, procedure_id):
 
     response = HttpResponse(bpmn_bytes, content_type='application/xml')
     response['Content-Disposition'] = f'attachment; filename="procedure_{procedure_id}.bpmn"'
+    return response
+
+def export_manual(request, organization_id):
+    """
+    Génère le Manuel de Procédures complet d'une organisation.
+    URL : /api/procedures/manual/<organization_id>/
+    Paramètres optionnels :
+    - ?service=RH        → filtre par service
+    - ?role=Comptable    → filtre par poste
+    """
+    service_filter = request.GET.get('service')
+    role_filter    = request.GET.get('role')
+
+    try:
+        pdf_bytes = generate_manual_pdf(
+            organization_id, service_filter, role_filter
+        )
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=404)
+
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = (
+        f'attachment; filename="manuel_procedures_{organization_id}.pdf"'
+    )
     return response
