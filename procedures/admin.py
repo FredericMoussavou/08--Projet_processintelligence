@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Procedure, Step, StepDependency, Rule, AuditReport, ChangeRequest
+from .models import Procedure, Step, StepDependency, Rule, AuditReport, ChangeRequest, ProcedureVersion
 from django.utils.html import format_html
 from django.urls import reverse
 
@@ -49,8 +49,14 @@ class AuditReportAdmin(admin.ModelAdmin):
     list_display  = ('procedure', 'score_optim', 'score_auto', 'generated_by', 'generated_at')
     list_filter   = ('generated_at',)
 
-
 @admin.register(ChangeRequest)
 class ChangeRequestAdmin(admin.ModelAdmin):
     list_display  = ('procedure', 'requested_by', 'reviewer', 'status', 'created_at', 'reviewed_at')
     list_filter   = ('status',)
+
+@admin.register(ProcedureVersion)
+class ProcedureVersionAdmin(admin.ModelAdmin):
+    list_display  = ('procedure', 'version_number', 'reason', 'created_by', 'created_at')
+    list_filter   = ('reason',)
+    search_fields = ('procedure__title', 'version_number')
+    readonly_fields = ('snapshot_data',)

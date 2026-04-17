@@ -14,4 +14,7 @@ urlpatterns = [
     path('change-requests/<int:cr_id>/', views.change_request_status, name='change_request_status'),
     path('change-requests/<int:cr_id>/approve/', views.approve_cr, name='approve_cr'),
     path('change-requests/<int:cr_id>/reject/', views.reject_cr, name='reject_cr'),
+    path('list/<int:organization_id>/', views.list_procedures, name='list_procedures'),
+    path('<int:procedure_id>/archive/', views.archive_procedure, name='archive_procedure'),
+    path('<int:procedure_id>/history/', views.procedure_history, name='procedure_history'),
 ]

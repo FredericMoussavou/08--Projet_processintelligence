@@ -43,7 +43,7 @@ class JWTAuthMiddleware:
 
     def __call__(self, request):
             path = request.path
-
+            
             # Rate limiting sur toutes les routes POST
             if request.method == 'POST':
                 rate_result = self._check_rate_limit(request, path)
@@ -128,11 +128,12 @@ class JWTAuthMiddleware:
         return request.META.get('REMOTE_ADDR', '0.0.0.0')
 
     def _try_authenticate(self, request) -> bool:
-        try:
-            result = self.jwt_auth.authenticate(request)
-            if result:
-                request.user = result[0]
-                return True
-        except (InvalidToken, TokenError):
-            pass
-        return False
+            try:
+                result = self.jwt_auth.authenticate(request)
+                if result:
+                    request.user = result[0]
+                    request._cached_user = result[0]
+                    return True
+            except (InvalidToken, TokenError):
+                pass
+            return False

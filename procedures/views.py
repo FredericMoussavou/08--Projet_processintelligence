@@ -295,3 +295,50 @@ def reject_cr(request, cr_id):
     result = reject_change_request(cr_id, user, reason)
     status_code = 200 if result.get('success') else 400
     return JsonResponse(result, status=status_code)
+
+from procedures.services.archiver import (
+    archive_procedure_version, get_procedure_history, get_procedures_by_status
+)
+
+def list_procedures(request, organization_id):
+    """
+    Liste les procédures accessibles par l'utilisateur.
+    GET /api/procedures/list/<org_id>/?status=active&service=RH
+    """
+    status  = request.GET.get('status')
+    service = request.GET.get('service')
+    user    = request.user if request.user.is_authenticated else None
+    
+    result = get_procedures_by_status(organization_id, user, status, service)
+    return JsonResponse(result)
+
+
+@csrf_exempt
+def archive_procedure(request, procedure_id):
+    """
+    Archive manuellement une procédure.
+    POST /api/procedures/<id>/archive/
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
+
+    try:
+        data    = json.loads(request.body) if request.body else {}
+        summary = data.get('change_summary', '')
+    except json.JSONDecodeError:
+        summary = ''
+
+    user   = request.user if request.user.is_authenticated else None
+    result = archive_procedure_version(procedure_id, user, 'manual_archive', summary)
+    status_code = 200 if result.get('success') else 400
+    return JsonResponse(result, status=status_code)
+
+
+def procedure_history(request, procedure_id):
+    """
+    Retourne l'historique des versions d'une procédure.
+    GET /api/procedures/<id>/history/
+    """
+    result = get_procedure_history(procedure_id)
+    status_code = 200 if result.get('success') else 404
+    return JsonResponse(result, status=status_code)

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Organization, Membership
+from .models import Organization, Membership, ServiceMembership
 
 
 @admin.register(Organization)
@@ -15,3 +15,8 @@ class MembershipAdmin(admin.ModelAdmin):
     list_display  = ('user', 'organization', 'role', 'joined_at')
     list_filter   = ('role',)
     search_fields = ('user__username', 'organization__name')
+@admin.register(ServiceMembership)
+class ServiceMembershipAdmin(admin.ModelAdmin):
+    list_display  = ('user', 'organization', 'service', 'role', 'assigned_at')
+    list_filter   = ('role', 'organization', 'service')
+    search_fields = ('user__username', 'service')

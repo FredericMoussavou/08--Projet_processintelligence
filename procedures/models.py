@@ -28,6 +28,17 @@ class Procedure(models.Model):
     owner         = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='owned_procedures')
     created_at    = models.DateTimeField(auto_now_add=True)
     updated_at    = models.DateTimeField(auto_now=True)
+    archived_at    = models.DateTimeField(null=True, blank=True, verbose_name="Archivée le")
+    archived_by    = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='archived_procedures',
+        verbose_name="Archivée par"
+    )
+    parent_version = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='derived_versions',
+        verbose_name="Version parente"
+    )
 
     class Meta:
         verbose_name = "Procédure"
@@ -250,3 +261,78 @@ class ChangeRequest(models.Model):
             'detail'   : detail,
         })
         self.save(update_fields=['workflow_log'])
+
+class ProcedureVersion(models.Model):
+    """
+    Snapshot immutable d'une procédure à un instant T.
+    Créé automatiquement à chaque approbation d'un ChangeRequest
+    ou manuellement par un Admin/Directeur.
+
+    Principe : une version ne s'écrase jamais — elle s'archive.
+    L'historique complet est toujours consultable.
+    """
+
+    procedure      = models.ForeignKey(
+        Procedure, on_delete=models.CASCADE,
+        related_name='versions'
+    )
+    version_number = models.CharField(max_length=20, verbose_name="Numéro de version")
+    snapshot_data  = models.JSONField(verbose_name="Données de la procédure")
+    change_summary = models.TextField(blank=True, verbose_name="Résumé des changements")
+    created_at     = models.DateTimeField(auto_now_add=True)
+    created_by     = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True,
+        related_name='created_versions'
+    )
+
+    REASON_AUTO    = 'auto_approval'
+    REASON_MANUAL  = 'manual_archive'
+    REASON_CHOICES = [
+        (REASON_AUTO,   'Approbation automatique'),
+        (REASON_MANUAL, 'Archivage manuel'),
+    ]
+    reason = models.CharField(
+        max_length=20, choices=REASON_CHOICES,
+        default=REASON_AUTO
+    )
+
+    class Meta:
+        verbose_name        = "Version de procédure"
+        verbose_name_plural = "Versions de procédures"
+        ordering            = ['-created_at']
+        unique_together     = ('procedure', 'version_number')
+
+    def __str__(self):
+        return f"{self.procedure.title} — v{self.version_number}"
+
+    @classmethod
+    def snapshot(cls, procedure, reason='auto_approval', user=None, change_summary=''):
+        """
+        Crée un snapshot immutable de la procédure actuelle.
+        Appelé automatiquement lors de chaque approbation.
+        """
+        steps = list(procedure.steps.all().order_by('step_order').values(
+            'step_order', 'title', 'action_verb', 'actor_role',
+            'tool_used', 'output_type', 'automation_score',
+            'compliance_status', 'is_recurring', 'has_condition',
+            'estimated_duration', 'trigger_type'
+        ))
+
+        snapshot_data = {
+            'title'      : procedure.title,
+            'description': procedure.description,
+            'service'    : procedure.service,
+            'version'    : procedure.version,
+            'status'     : procedure.status,
+            'steps'      : steps,
+            'steps_count': len(steps),
+        }
+
+        return cls.objects.create(
+            procedure      = procedure,
+            version_number = procedure.version,
+            snapshot_data  = snapshot_data,
+            change_summary = change_summary,
+            created_by     = user,
+            reason         = reason,
+        )

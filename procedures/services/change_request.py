@@ -87,15 +87,32 @@ def _apply_approval(cr: ChangeRequest, actor: str = 'système'):
     procedure.status  = Procedure.STATUS_ACTIVE
     procedure.save()
 
+# Snapshot automatique de l'ancienne version avant mise à jour
+    from procedures.models import ProcedureVersion
+    reviewer_user = cr.reviewer if cr.reviewer else None
+    ProcedureVersion.snapshot(
+        procedure      = procedure,
+        reason         = 'auto_approval',
+        user           = reviewer_user,
+        change_summary = cr.description[:200],
+    )
+
+    # Archive l'ancienne version de la procédure
+    from django.utils import timezone as tz
+    old_procedure_status         = procedure.status
+    procedure.archived_at        = None
+    procedure.version            = new_version
+    procedure.status             = Procedure.STATUS_ACTIVE
+    procedure.save()
+
     cr.reviewed_at = timezone.now()
     cr.save(update_fields=['reviewed_at'])
 
     cr.add_log(
         'Procédure mise à jour',
-        detail=f"Version {old_version} → {new_version} — statut : Active",
+        detail=f"Version {old_version} → {new_version} — statut : Active — snapshot v{old_version} créé",
         actor=actor
     )
-
 
 def _increment_version(version: str, change_type: str = 'patch') -> str:
     """
