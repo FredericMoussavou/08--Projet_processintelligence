@@ -1,5 +1,7 @@
 from django.contrib import admin
 from .models import Procedure, Step, StepDependency, Rule, AuditReport, ChangeRequest
+from django.utils.html import format_html
+from django.urls import reverse
 
 class StepInline(admin.TabularInline):
     model = Step
@@ -8,11 +10,21 @@ class StepInline(admin.TabularInline):
     readonly_fields = ('automation_score',)
 @admin.register(Procedure)
 class ProcedureAdmin(admin.ModelAdmin):
-    list_display  = ('title', 'organization', 'service', 'version', 'status', 'owner', 'created_at')
+    list_display  = ('title', 'organization', 'service', 'version', 'status', 'owner', 'created_at', 'audit_link')
     list_filter   = ('status', 'organization')
     search_fields = ('title', 'description')
     inlines       = [StepInline]
 
+    def audit_link(self, obj):
+        reports = obj.audit_reports.all()
+        if reports.exists():
+            latest = reports.latest('generated_at')
+            url = reverse('admin:procedures_auditreport_change', args=[latest.id])
+            return format_html('<a href="{}">📊 Voir rapport</a>', url)
+        url = f"/api/procedures/{obj.id}/analyze/"
+        return format_html('<a href="{}" onclick="fetch(this.href, {{method:\'POST\'}}).then(()=>location.reload()); return false;">⚡ Générer</a>', url)
+
+    audit_link.short_description = 'Rapport d\'audit'
 
 @admin.register(Step)
 class StepAdmin(admin.ModelAdmin):

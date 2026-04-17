@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from procedures.services.ingestion import ingest_text
 from organizations.models import Organization
+from procedures.services.analyzer import analyze_procedure as run_analysis
 
 
 @csrf_exempt
@@ -55,4 +56,18 @@ def ingest_procedure(request):
     )
 
     status_code = 201 if result['success'] else 400
+    return JsonResponse(result, status=status_code)
+
+@csrf_exempt
+def analyze(request, procedure_id):
+    """
+    Lance l'analyse complète d'une procédure.
+    Méthode : POST
+    URL : /api/procedures/<id>/analyze/
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
+
+    result = run_analysis(procedure_id)
+    status_code = 200 if result.get('success') else 404
     return JsonResponse(result, status=status_code)

@@ -23,6 +23,7 @@ markdown-it-py==4.0.0
 MarkupSafe==3.0.3
 mdurl==0.1.2
 murmurhash==1.0.15
+networkx==3.6.1
 numpy==2.4.4
 packaging==26.1
 pillow==12.2.0
