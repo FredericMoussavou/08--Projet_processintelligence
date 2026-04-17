@@ -1,12 +1,17 @@
 from django.contrib import admin
 from .models import Procedure, Step, StepDependency, Rule, AuditReport, ChangeRequest
 
-
+class StepInline(admin.TabularInline):
+    model = Step
+    extra = 0
+    fields = ('step_order', 'title', 'actor_role', 'action_verb', 'automation_score', 'compliance_status')
+    readonly_fields = ('automation_score',)
 @admin.register(Procedure)
 class ProcedureAdmin(admin.ModelAdmin):
     list_display  = ('title', 'organization', 'service', 'version', 'status', 'owner', 'created_at')
     list_filter   = ('status', 'organization')
     search_fields = ('title', 'description')
+    inlines       = [StepInline]
 
 
 @admin.register(Step)
@@ -26,7 +31,6 @@ class RuleAdmin(admin.ModelAdmin):
     list_display  = ('label', 'organization', 'severity', 'legal_ref', 'is_active')
     list_filter   = ('severity', 'is_active')
     search_fields = ('label', 'legal_ref')
-
 
 @admin.register(AuditReport)
 class AuditReportAdmin(admin.ModelAdmin):
