@@ -1,0 +1,65 @@
+{
+  "name": "ProcessIntelligence Default",
+  "colors": {
+    "primary":     "#1B3A5C",
+    "secondary":   "#2E6DA4",
+    "light":       "#D6E4F0",
+    "background":  "#F5F7FA",
+    "text":        "#4A4A4A",
+    "success":     "#1E7A4A",
+    "warning":     "#C76B00",
+    "danger":      "#CC0000",
+    "white":       "#FFFFFF"
+  },
+  "fonts": {
+    "title":       "Helvetica-Bold",
+    "heading":     "Helvetica-Bold",
+    "body":        "Helvetica",
+    "caption":     "Helvetica"
+  },
+  "font_sizes": {
+    "title":       24,
+    "subtitle":    13,
+    "heading1":    14,
+    "heading2":    12,
+    "body":        10,
+    "table_header": 9,
+    "table_cell":  9,
+    "caption":     8
+  },
+  "spacing": {
+    "title_gap":    0.4,
+    "section_gap":  1.0,
+    "cell_padding": 8
+  },
+  "report": {
+    "show_cover":            true,
+    "show_scores":           true,
+    "show_anomalies":        true,
+    "show_recommendations":  true,
+    "show_steps":            true,
+    "show_footer":           true
+  },
+  "frontend": {
+    "logo_url":         "",
+    "company_name":     "",
+    "favicon_url":      "",
+    "sidebar_color":    "#1B3A5C",
+    "topbar_color":     "#2E6DA4",
+    "button_color":     "#2E6DA4",
+    "button_text":      "#FFFFFF",
+    "link_color":       "#2E6DA4",
+    "card_background":  "#FFFFFF",
+    "card_border":      "#D6E4F0",
+    "badge_success":    "#1E7A4A",
+    "badge_warning":    "#C76B00",
+    "badge_danger":     "#CC0000",
+    "font_family":      "Inter, sans-serif",
+    "font_size_base":   "14px",
+    "border_radius":    "8px",
+    "dashboard_layout": "sidebar",
+    "show_scores_on_dashboard": true,
+    "show_anomalies_on_dashboard": true,
+    "language":         "fr"
+  }
+}

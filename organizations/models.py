@@ -39,6 +39,12 @@ class Organization(models.Model):
     plan        = models.CharField(max_length=20, choices=PLAN_CHOICES, default=PLAN_FREE)
     sector      = models.CharField(max_length=20, choices=SECTOR_CHOICES, default=SECTOR_OTHER)
     country     = models.CharField(max_length=10, default='FR', verbose_name="Pays")
+    theme = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name="Thème personnalisé",
+        help_text="Surcharge du thème par défaut (couleurs, polices, tailles)"
+    )
     created_at  = models.DateTimeField(auto_now_add=True)
     updated_at  = models.DateTimeField(auto_now=True)
     is_active   = models.BooleanField(default=True)

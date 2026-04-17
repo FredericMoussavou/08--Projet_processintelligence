@@ -1,11 +1,12 @@
 import json
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from procedures.services.ingestion import ingest_text
 from organizations.models import Organization
 from procedures.services.analyzer import analyze_procedure as run_analysis
+from procedures.services.exporter import generate_audit_pdf, generate_csv_template
 
 
 @csrf_exempt
@@ -104,3 +105,28 @@ def analyze(request, procedure_id):
     result = run_analysis(procedure_id)
     status_code = 200 if result.get('success') else 404
     return JsonResponse(result, status=status_code)
+
+def export_audit_pdf(request, procedure_id):
+    """
+    Génère et retourne le rapport d'audit en PDF.
+    URL : /api/procedures/<id>/export/pdf/
+    """
+    try:
+        pdf_bytes = generate_audit_pdf(procedure_id)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=404)
+
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="audit_procedure_{procedure_id}.pdf"'
+    return response
+
+
+def download_csv_template(request):
+    """
+    Retourne le template CSV officiel ProcessIntelligence.
+    URL : /api/procedures/template/csv/
+    """
+    csv_bytes = generate_csv_template()
+    response = HttpResponse(csv_bytes, content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="template_processintelligence.csv"'
+    return response
