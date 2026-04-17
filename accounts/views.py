@@ -139,13 +139,31 @@ def me(request):
     Infos de l'utilisateur connecté.
     GET /api/auth/me/
     """
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Non authentifié'}, status=401)
+    # Compatible avec l'authentification JWT via middleware
+    user = getattr(request, 'user', None)
+    
+    if user is None or not user.is_authenticated:
+        # Tentative d'authentification directe via JWT
+        from rest_framework_simplejwt.authentication import JWTAuthentication
+        from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+        try:
+            jwt_auth = JWTAuthentication()
+            result = jwt_auth.authenticate(request)
+            if result:
+                user = result[0]
+            else:
+                return JsonResponse({'error': 'Non authentifié'}, status=401)
+        except (InvalidToken, TokenError):
+            return JsonResponse({'error': 'Token invalide ou expiré'}, status=401)
 
-    memberships = Membership.objects.filter(user=request.user).select_related('organization')
+    memberships = Membership.objects.filter(user=user).select_related('organization')
 
     return JsonResponse({
-        'user': {'id': request.user.id, 'username': request.user.username, 'email': request.user.email},
+        'user': {
+            'id'      : user.id,
+            'username': user.username,
+            'email'   : user.email,
+        },
         'organizations': [
             {
                 'id'    : m.organization.id,

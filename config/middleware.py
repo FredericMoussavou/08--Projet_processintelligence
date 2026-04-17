@@ -18,6 +18,10 @@ class JWTAuthMiddleware:
         '/admin/',
     ]
 
+    AUTHENTICATED_PATHS = [
+        '/api/auth/me/',
+    ]
+
     DIAGNOSTIC_PATHS = [
         '/api/procedures/ingest/',
         '/api/procedures/template/csv/',
@@ -38,31 +42,40 @@ class JWTAuthMiddleware:
         self.jwt_auth     = JWTAuthentication()
 
     def __call__(self, request):
-        path = request.path
+            path = request.path
 
-        # Rate limiting sur toutes les routes POST
-        if request.method == 'POST':
-            rate_result = self._check_rate_limit(request, path)
-            if rate_result:
-                return rate_result
+            # Rate limiting sur toutes les routes POST
+            if request.method == 'POST':
+                rate_result = self._check_rate_limit(request, path)
+                if rate_result:
+                    return rate_result
 
-        # Routes publiques
-        if any(path.startswith(p) for p in self.PUBLIC_PATHS):
+            # Routes publiques — pas d'auth
+            if any(path.startswith(p) for p in self.PUBLIC_PATHS):
+                return self.get_response(request)
+
+            # Routes auth obligatoire dans le namespace /auth/
+            if any(path.startswith(p) for p in self.AUTHENTICATED_PATHS):
+                if not self._try_authenticate(request):
+                    return JsonResponse(
+                        {'error': 'Authentification requise'},
+                        status=401
+                    )
+                return self.get_response(request)
+
+            # Routes Diagnostic Express — auth optionnelle
+            if any(path.startswith(p) for p in self.DIAGNOSTIC_PATHS):
+                self._try_authenticate(request)
+                return self.get_response(request)
+
+            # Toutes les autres routes — auth obligatoire
+            if not self._try_authenticate(request):
+                return JsonResponse(
+                    {'error': 'Authentification requise — fournissez un token JWT valide'},
+                    status=401
+                )
+
             return self.get_response(request)
-
-        # Routes Diagnostic Express
-        if any(path.startswith(p) for p in self.DIAGNOSTIC_PATHS):
-            self._try_authenticate(request)
-            return self.get_response(request)
-
-        # Toutes les autres routes — auth obligatoire
-        if not self._try_authenticate(request):
-            return JsonResponse(
-                {'error': 'Authentification requise — fournissez un token JWT valide'},
-                status=401
-            )
-
-        return self.get_response(request)
 
     def _check_rate_limit(self, request, path) -> JsonResponse | None:
         """

@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="definitions_1" targetNamespace="http://processintelligence.io/bpmn" exporter="ProcessIntelligence" exporterVersion="1.0">
+  <bpmn:process id="process_1" name="Recrutement" isExecutable="false">
+    <bpmn:startEvent id="start_1" name="Début"/>
+    <bpmn:task id="task_1" name="Le RH : publier"/>
+    <bpmn:task id="task_2" name="Le manager : Le manager analyse les CVs dans Excel.">
+      <bpmn:documentation>Outil : Excel | Score auto : 50%</bpmn:documentation>
+    </bpmn:task>
+    <bpmn:task id="task_3" name="La DG : signe"/>
+    <bpmn:endEvent id="end_1" name="Fin"/>
+    <bpmn:sequenceFlow id="flow_start_task_1" sourceRef="start_1" targetRef="task_1"/>
+    <bpmn:sequenceFlow id="flow_task_1_task_2" sourceRef="task_1" targetRef="task_2"/>
+    <bpmn:sequenceFlow id="flow_task_2_task_3" sourceRef="task_2" targetRef="task_3"/>
+    <bpmn:sequenceFlow id="flow_task_3_end" sourceRef="task_3" targetRef="end_1"/>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="diagram_1">
+    <bpmndi:BPMNPlane id="plane_1" bpmnElement="process_1">
+      <bpmndi:BPMNShape id="shape_start_1" bpmnElement="start_1">
+        <dc:Bounds x="100" y="182" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_task_1" bpmnElement="task_1">
+        <dc:Bounds x="176" y="170" width="160" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_task_2" bpmnElement="task_2">
+        <dc:Bounds x="376" y="170" width="160" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_task_3" bpmnElement="task_3">
+        <dc:Bounds x="576" y="170" width="160" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_end_1" bpmnElement="end_1">
+        <dc:Bounds x="776" y="182" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="edge_flow_start_task_1" bpmnElement="flow_start_task_1">
+        <di:waypoint x="136" y="200"/>
+        <di:waypoint x="176" y="200"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_flow_task_1_task_2" bpmnElement="flow_task_1_task_2">
+        <di:waypoint x="336" y="200"/>
+        <di:waypoint x="376" y="200"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_flow_task_2_task_3" bpmnElement="flow_task_2_task_3">
+        <di:waypoint x="536" y="200"/>
+        <di:waypoint x="576" y="200"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_flow_task_3_end" bpmnElement="flow_task_3_end">
+        <di:waypoint x="736" y="200"/>
+        <di:waypoint x="776" y="200"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
