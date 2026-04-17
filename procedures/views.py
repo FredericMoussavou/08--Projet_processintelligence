@@ -11,51 +11,73 @@ from procedures.services.analyzer import analyze_procedure as run_analysis
 @csrf_exempt
 def ingest_procedure(request):
     """
-    Vue d'ingestion d'une procédure via texte libre.
-    Méthode : POST
-    Body JSON :
-    {
-        "text": "Le RH publie l'offre...",
-        "title": "Processus de recrutement",
-        "service": "RH",
-        "organization_id": 1,
-        "apply_masking": true
-    }
+    Vue d'ingestion unifiée.
+    Détecte automatiquement le type de source :
+    - JSON body avec champ 'text' → texte libre
+    - Fichier uploadé .pdf       → PDF
+    - Fichier uploadé .docx      → Word
+    - Fichier uploadé .csv       → CSV structuré
     """
     if request.method != 'POST':
         return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
 
-    try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({'error': 'JSON invalide'}, status=400)
+    # Récupération des métadonnées
+    # Selon le type de requête, elles sont dans body JSON ou dans POST form
+    if request.content_type and 'application/json' in request.content_type:
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'JSON invalide'}, status=400)
+        uploaded_file = None
+    else:
+        data = request.POST
+        uploaded_file = request.FILES.get('file')
 
-    # Validation des champs obligatoires
-    required = ['text', 'title', 'organization_id']
-    for field in required:
-        if not data.get(field):
-            return JsonResponse(
-                {'error': f'Champ obligatoire manquant : {field}'},
-                status=400
-            )
+    # Validation des champs communs
+    title   = data.get('title', '')
+    service = data.get('service', '')
+    org_id  = data.get('organization_id')
 
-    # Récupération de l'organisation
+    if not title:
+        return JsonResponse({'error': 'Champ obligatoire manquant : title'}, status=400)
+    if not org_id:
+        return JsonResponse({'error': 'Champ obligatoire manquant : organization_id'}, status=400)
+
     try:
-        organization = Organization.objects.get(id=data['organization_id'])
+        organization = Organization.objects.get(id=org_id)
     except Organization.DoesNotExist:
         return JsonResponse({'error': 'Organisation introuvable'}, status=404)
 
-    # Appel du service d'ingestion
-    result = ingest_text(
-        text           = data['text'],
-        title          = data['title'],
-        service        = data.get('service', ''),
-        organization   = organization,
-        owner          = request.user if request.user.is_authenticated else None,
-        apply_masking  = data.get('apply_masking', True),
-    )
+    owner         = request.user if request.user.is_authenticated else None
+    apply_masking = str(data.get('apply_masking', 'true')).lower() == 'true'
 
-    status_code = 201 if result['success'] else 400
+    # Routage selon le type de source
+    if uploaded_file:
+        filename = uploaded_file.name.lower()
+
+        if filename.endswith('.pdf'):
+            from procedures.services.ingestion import ingest_pdf
+            result = ingest_pdf(uploaded_file, title, service, organization, owner, apply_masking)
+
+        elif filename.endswith('.docx'):
+            from procedures.services.ingestion import ingest_docx
+            result = ingest_docx(uploaded_file, title, service, organization, owner, apply_masking)
+
+        elif filename.endswith('.csv'):
+            from procedures.services.ingestion import ingest_csv
+            result = ingest_csv(uploaded_file, title, service, organization, owner)
+
+        else:
+            return JsonResponse({'error': 'Format de fichier non supporté. Formats acceptés : PDF, DOCX, CSV'}, status=400)
+
+    else:
+        # Texte libre
+        text = data.get('text', '')
+        if not text:
+            return JsonResponse({'error': 'Champ obligatoire manquant : text ou file'}, status=400)
+        result = ingest_text(text, title, service, organization, owner, apply_masking)
+
+    status_code = 201 if result.get('success') else 400
     return JsonResponse(result, status=status_code)
 
 @csrf_exempt
