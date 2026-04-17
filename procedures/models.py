@@ -182,24 +182,50 @@ class AuditReport(models.Model):
 
 class ChangeRequest(models.Model):
     """
-    Workflow d'approbation pour passer d'une ancienne procédure
-    à une version optimisée. C'est la base de la gestion du changement.
+    Workflow d'approbation pour modifier une procédure.
     """
 
-    STATUS_PENDING = 'pending'
-    STATUS_APPROVED = 'approved'
-    STATUS_REJECTED = 'rejected'
+    STATUS_PENDING          = 'pending'
+    STATUS_AUTO_CHECKING    = 'auto_checking'
+    STATUS_AUTO_REJECTED    = 'auto_rejected'
+    STATUS_AWAITING_REVIEW  = 'awaiting_review'
+    STATUS_APPROVED         = 'approved'
+    STATUS_AUTO_APPROVED    = 'auto_approved'
+    STATUS_REJECTED         = 'rejected'
+
     STATUS_CHOICES = [
-        (STATUS_PENDING, 'En attente'),
-        (STATUS_APPROVED, 'Approuvée'),
-        (STATUS_REJECTED, 'Rejetée'),
+        (STATUS_PENDING,         'Soumis'),
+        (STATUS_AUTO_CHECKING,   'Analyse automatique en cours'),
+        (STATUS_AUTO_REJECTED,   'Rejeté automatiquement'),
+        (STATUS_AWAITING_REVIEW, 'En attente de validation'),
+        (STATUS_APPROVED,        'Approuvée'),
+        (STATUS_AUTO_APPROVED,   'Approuvée automatiquement'),
+        (STATUS_REJECTED,        'Rejetée'),
     ]
 
     procedure     = models.ForeignKey(Procedure, on_delete=models.CASCADE, related_name='change_requests')
     requested_by  = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='change_requests')
     reviewer      = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviews')
     description   = models.TextField(verbose_name="Description du changement")
-    status        = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    CHANGE_PATCH = 'patch'
+    CHANGE_MINOR = 'minor'
+    CHANGE_MAJOR = 'major'
+    CHANGE_TYPE_CHOICES = [
+        (CHANGE_PATCH, 'Correctif (patch) — ex: reformulation, ajout d\'outil'),
+        (CHANGE_MINOR, 'Mineur — ex: ajout d\'étape, modification d\'acteur'),
+        (CHANGE_MAJOR, 'Majeur — ex: refonte structurelle, changement légal'),
+    ]
+
+    change_type = models.CharField(
+        max_length=10,
+        choices=CHANGE_TYPE_CHOICES,
+        default=CHANGE_PATCH,
+        verbose_name="Type de changement"
+    )
+    status        = models.CharField(max_length=30, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    rejection_reason = models.TextField(blank=True, verbose_name="Motif de rejet")
+    blocking_rules   = models.JSONField(default=list, verbose_name="Règles bloquantes détectées")
+    workflow_log     = models.JSONField(default=list, verbose_name="Journal du workflow")
     created_at    = models.DateTimeField(auto_now_add=True)
     reviewed_at   = models.DateTimeField(null=True, blank=True)
 
@@ -210,3 +236,17 @@ class ChangeRequest(models.Model):
 
     def __str__(self):
         return f"ChangeRequest — {self.procedure.title} ({self.status})"
+
+    def add_log(self, event: str, detail: str = '', actor: str = 'système'):
+        """
+        Ajoute une entrée dans le journal du workflow.
+        Permet de tracer chaque étape avec horodatage.
+        """
+        from django.utils import timezone
+        self.workflow_log.append({
+            'timestamp': timezone.now().strftime('%d/%m/%Y à %H:%M:%S'),
+            'actor'    : actor,
+            'event'    : event,
+            'detail'   : detail,
+        })
+        self.save(update_fields=['workflow_log'])
