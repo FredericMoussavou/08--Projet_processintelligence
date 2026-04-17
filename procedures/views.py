@@ -7,6 +7,7 @@ from procedures.services.ingestion import ingest_text
 from organizations.models import Organization
 from procedures.services.analyzer import analyze_procedure as run_analysis
 from procedures.services.exporter import generate_audit_pdf, generate_csv_template
+from procedures.services.bpmn_exporter import generate_bpmn
 
 
 @csrf_exempt
@@ -129,4 +130,18 @@ def download_csv_template(request):
     csv_bytes = generate_csv_template()
     response = HttpResponse(csv_bytes, content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = 'attachment; filename="template_processintelligence.csv"'
+    return response
+
+def export_bpmn(request, procedure_id):
+    """
+    Génère et retourne le fichier BPMN 2.0.
+    URL : /api/procedures/<id>/export/bpmn/
+    """
+    try:
+        bpmn_bytes = generate_bpmn(procedure_id)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=404)
+
+    response = HttpResponse(bpmn_bytes, content_type='application/xml')
+    response['Content-Disposition'] = f'attachment; filename="procedure_{procedure_id}.bpmn"'
     return response

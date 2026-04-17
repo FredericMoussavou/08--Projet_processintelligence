@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="definitions_5" targetNamespace="http://processintelligence.io/bpmn" exporter="ProcessIntelligence" exporterVersion="1.0">
+  <bpmn:process id="process_5" name="Paiement fournisseur" isExecutable="false">
+    <bpmn:startEvent id="start_5" name="Début"/>
+    <bpmn:task id="task_18" name="Le comptable : saisir">
+      <bpmn:documentation>Outil : Sage | Score auto : 80%</bpmn:documentation>
+    </bpmn:task>
+    <bpmn:task id="task_19" name="Le responsable : Le responsable valide le paiement."/>
+    <bpmn:task id="task_20" name="Le comptable : Le comptable archive le document dans Sh">
+      <bpmn:documentation>Outil : Sharepoint | Score auto : 50%</bpmn:documentation>
+    </bpmn:task>
+    <bpmn:endEvent id="end_5" name="Fin"/>
+    <bpmn:sequenceFlow id="flow_start_task_18" sourceRef="start_5" targetRef="task_18"/>
+    <bpmn:sequenceFlow id="flow_task_18_task_19" sourceRef="task_18" targetRef="task_19">
+      <bpmn:conditionExpression>condition</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_task_19_task_20" sourceRef="task_19" targetRef="task_20"/>
+    <bpmn:sequenceFlow id="flow_task_20_end" sourceRef="task_20" targetRef="end_5"/>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="diagram_5">
+    <bpmndi:BPMNPlane id="plane_5" bpmnElement="process_5">
+      <bpmndi:BPMNShape id="shape_start_5" bpmnElement="start_5">
+        <dc:Bounds x="60" y="82" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_task_18" bpmnElement="task_18">
+        <dc:Bounds x="136" y="70" width="160" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_task_19" bpmnElement="task_19">
+        <dc:Bounds x="336" y="70" width="160" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_task_20" bpmnElement="task_20">
+        <dc:Bounds x="536" y="70" width="160" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="shape_end_5" bpmnElement="end_5">
+        <dc:Bounds x="736" y="82" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="edge_flow_start_task_18" bpmnElement="flow_start_task_18">
+        <di:waypoint x="96" y="100"/>
+        <di:waypoint x="136" y="100"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_flow_task_18_task_19" bpmnElement="flow_task_18_task_19">
+        <di:waypoint x="296" y="100"/>
+        <di:waypoint x="336" y="100"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_flow_task_19_task_20" bpmnElement="flow_task_19_task_20">
+        <di:waypoint x="496" y="100"/>
+        <di:waypoint x="536" y="100"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="edge_flow_task_20_end" bpmnElement="flow_task_20_end">
+        <di:waypoint x="696" y="100"/>
+        <di:waypoint x="736" y="100"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
