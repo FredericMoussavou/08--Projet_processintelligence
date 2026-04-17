@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "sector": "insurance",
+  "description": "Règles secteur Assurance",
+  "rules": [
+    {
+      "id": "ASSU-001",
+      "label": "Devoir de conseil documenté",
+      "description": "Toute recommandation produit doit être précédée d'un recueil du besoin documenté",
+      "severity": "blocking",
+      "legal_ref": "DDA — Directive Distribution Assurance 2016/97/UE",
+      "applies_to": {
+        "action_keywords": ["conseiller", "recommander", "proposer", "vendre"],
+        "output_types": ["decision", "document"],
+        "actor_keywords": ["conseiller", "courtier", "agent"]
+      },
+      "recommendation": "S'assurer que le recueil du besoin client est documenté avant cette étape",
+      "active": true
+    },
+    {
+      "id": "ASSU-002",
+      "label": "Délai de renonciation respecté",
+      "description": "Le délai légal de renonciation doit être respecté avant tout engagement",
+      "severity": "blocking",
+      "legal_ref": "Code des Assurances Art. L132-5-1",
+      "applies_to": {
+        "action_keywords": ["souscrire", "signer", "engager", "valider"],
+        "output_types": ["document", "decision"],
+        "actor_keywords": []
+      },
+      "recommendation": "Vérifier que le délai de renonciation de 30 jours est respecté",
+      "active": true
+    }
+  ]
+}

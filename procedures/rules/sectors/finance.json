@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "sector": "finance",
+  "description": "Règles secteur Finance / Banque",
+  "rules": [
+    {
+      "id": "FIN-001",
+      "label": "Double signature obligatoire",
+      "description": "Toute validation financière au-dessus du seuil légal requiert deux signataires",
+      "severity": "blocking",
+      "legal_ref": "ACPR — Contrôle interne bancaire",
+      "applies_to": {
+        "action_keywords": ["valider", "approuver", "virer", "payer", "signer"],
+        "output_types": ["decision", "document"],
+        "actor_keywords": []
+      },
+      "recommendation": "Ajouter un second validateur pour cette étape financière",
+      "active": true
+    },
+    {
+      "id": "FIN-002",
+      "label": "Traçabilité LCB-FT",
+      "description": "Les opérations financières doivent être tracées pour la lutte contre le blanchiment",
+      "severity": "blocking",
+      "legal_ref": "LCB-FT — Art. L561-10 Code Monétaire et Financier",
+      "applies_to": {
+        "action_keywords": ["virer", "payer", "transférer", "débiter", "créditer"],
+        "output_types": ["data", "document"],
+        "actor_keywords": []
+      },
+      "recommendation": "S'assurer que cette opération est enregistrée dans le registre LCB-FT",
+      "active": true
+    },
+    {
+      "id": "DORA-001",
+      "label": "Résilience opérationnelle numérique",
+      "description": "Les processus critiques doivent avoir un plan de continuité documenté",
+      "severity": "warning",
+      "legal_ref": "Règlement DORA — UE 2022/2554",
+      "applies_to": {
+        "action_keywords": ["traiter", "exécuter", "gérer", "opérer"],
+        "output_types": ["data", "decision"],
+        "actor_keywords": []
+      },
+      "recommendation": "Documenter le plan de continuité pour ce processus critique",
+      "active": true
+    }
+  ]
+}

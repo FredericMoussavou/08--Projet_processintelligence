@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "sector": "hr",
+  "description": "Règles secteur RH / Travail",
+  "rules": [
+    {
+      "id": "RH-001",
+      "label": "Délais légaux de licenciement",
+      "description": "La procédure de licenciement doit respecter les délais légaux à chaque étape",
+      "severity": "blocking",
+      "legal_ref": "Code du Travail Art. L1232-2",
+      "applies_to": {
+        "action_keywords": ["licencier", "notifier", "convoquer", "rompre"],
+        "output_types": ["document", "decision"],
+        "actor_keywords": ["RH", "DRH", "manager"]
+      },
+      "recommendation": "Vérifier les délais légaux applicables à cette étape de la procédure",
+      "active": true
+    },
+    {
+      "id": "RH-002",
+      "label": "Entretien préalable obligatoire",
+      "description": "Tout licenciement doit être précédé d'un entretien préalable",
+      "severity": "blocking",
+      "legal_ref": "Code du Travail Art. L1232-3",
+      "applies_to": {
+        "action_keywords": ["licencier", "rompre", "terminer"],
+        "output_types": ["decision"],
+        "actor_keywords": []
+      },
+      "recommendation": "S'assurer que l'entretien préalable est bien planifié avant cette décision",
+      "active": true
+    },
+    {
+      "id": "RH-003",
+      "label": "Protection des données candidats",
+      "description": "Les données des candidats ne peuvent être conservées plus de 2 ans",
+      "severity": "warning",
+      "legal_ref": "RGPD + CNIL — Délibération 2012-113",
+      "applies_to": {
+        "action_keywords": ["archiver", "conserver", "stocker"],
+        "output_types": ["data", "document"],
+        "actor_keywords": ["RH", "recruteur"]
+      },
+      "recommendation": "Limiter la conservation des CVs et dossiers candidats à 2 ans maximum",
+      "active": true
+    }
+  ]
+}

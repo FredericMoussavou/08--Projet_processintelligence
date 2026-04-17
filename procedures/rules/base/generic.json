@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "description": "Règles génériques applicables à tous les secteurs",
+  "rules": [
+    {
+      "id": "RGPD-001",
+      "label": "Consentement explicite requis",
+      "description": "Toute étape collectant ou traitant des données personnelles doit être documentée et consentie",
+      "severity": "blocking",
+      "legal_ref": "RGPD Art. 6 — Licéité du traitement",
+      "applies_to": {
+        "action_keywords": ["collecter", "traiter", "stocker", "enregistrer", "saisir", "archiver"],
+        "output_types": ["data"],
+        "actor_keywords": []
+      },
+      "recommendation": "Documenter la base légale du traitement et s'assurer du consentement",
+      "active": true
+    },
+    {
+      "id": "RGPD-002",
+      "label": "Durée de conservation limitée",
+      "description": "Les données personnelles ne doivent pas être conservées au-delà de leur finalité",
+      "severity": "warning",
+      "legal_ref": "RGPD Art. 5(1)(e) — Limitation de la conservation",
+      "applies_to": {
+        "action_keywords": ["archiver", "conserver", "stocker", "garder"],
+        "output_types": ["data", "document"],
+        "actor_keywords": []
+      },
+      "recommendation": "Définir une durée de conservation explicite pour cette étape",
+      "active": true
+    },
+    {
+      "id": "TRACE-001",
+      "label": "Traçabilité des validations",
+      "description": "Toute étape de validation doit être tracée avec horodatage et identité du validateur",
+      "severity": "warning",
+      "legal_ref": "Bonnes pratiques de gouvernance",
+      "applies_to": {
+        "action_keywords": ["valider", "approuver", "signer", "autoriser"],
+        "output_types": ["decision"],
+        "actor_keywords": []
+      },
+      "recommendation": "S'assurer que cette validation est enregistrée avec date, heure et identité",
+      "active": true
+    },
+    {
+      "id": "SECU-001",
+      "label": "Séparation des tâches sensibles",
+      "description": "Une même personne ne doit pas être seule responsable d'une chaîne complète d'actions sensibles",
+      "severity": "warning",
+      "legal_ref": "Contrôle interne — Principe de séparation des tâches",
+      "applies_to": {
+        "action_keywords": ["valider", "payer", "virer", "approuver", "signer"],
+        "output_types": ["decision", "document"],
+        "actor_keywords": []
+      },
+      "recommendation": "Impliquer un second acteur pour cette étape critique",
+      "active": true
+    }
+  ]
+}

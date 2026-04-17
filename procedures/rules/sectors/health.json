@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "sector": "health",
+  "description": "Règles secteur Santé / Médical",
+  "rules": [
+    {
+      "id": "HDS-001",
+      "label": "Hébergement données de santé certifié",
+      "description": "Les données de santé doivent être hébergées sur un système certifié HDS",
+      "severity": "blocking",
+      "legal_ref": "Art. L1111-8 Code de Santé Publique",
+      "applies_to": {
+        "action_keywords": ["stocker", "archiver", "enregistrer", "héberger"],
+        "output_types": ["data"],
+        "actor_keywords": []
+      },
+      "recommendation": "Vérifier que le système de stockage est certifié HDS",
+      "active": true
+    },
+    {
+      "id": "ANSM-001",
+      "label": "Traçabilité des actes médicaux",
+      "description": "Tout acte médical doit être tracé dans le dossier patient",
+      "severity": "blocking",
+      "legal_ref": "Code de Santé Publique Art. R1112-2",
+      "applies_to": {
+        "action_keywords": ["prescrire", "administrer", "traiter", "diagnostiquer"],
+        "output_types": ["decision", "document"],
+        "actor_keywords": ["médecin", "infirmier", "praticien"]
+      },
+      "recommendation": "S'assurer que cet acte est enregistré dans le dossier patient",
+      "active": true
+    }
+  ]
+}

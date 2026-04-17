@@ -9,6 +9,7 @@ from procedures.services.analyzer import analyze_procedure as run_analysis
 from procedures.services.exporter import generate_audit_pdf, generate_csv_template
 from procedures.services.bpmn_exporter import generate_bpmn
 from procedures.services.manual_exporter import generate_manual_pdf
+from procedures.services.compliance import run_compliance_check, get_available_rules
 
 
 @csrf_exempt
@@ -170,3 +171,22 @@ def export_manual(request, organization_id):
         f'attachment; filename="manuel_procedures_{organization_id}.pdf"'
     )
     return response
+
+def check_compliance(request, procedure_id):
+    """
+    Lance la vérification de conformité d'une procédure.
+    URL : /api/procedures/<id>/compliance/
+    """
+    result = run_compliance_check(procedure_id)
+    status_code = 200 if result.get('success') else 404
+    return JsonResponse(result, status=status_code)
+
+
+def list_rules(request):
+    """
+    Retourne le référentiel des règles disponibles.
+    URL : /api/procedures/rules/?sector=finance
+    """
+    sector = request.GET.get('sector')
+    rules  = get_available_rules(sector)
+    return JsonResponse(rules)

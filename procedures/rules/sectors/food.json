@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "sector": "food",
+  "description": "Règles secteur Agroalimentaire",
+  "rules": [
+    {
+      "id": "HACCP-001",
+      "label": "Points critiques HACCP obligatoires",
+      "description": "Les étapes de contrôle qualité HACCP ne peuvent pas être supprimées ou automatisées sans validation",
+      "severity": "blocking",
+      "legal_ref": "Règlement CE 852/2004 — Hygiène des denrées alimentaires",
+      "applies_to": {
+        "action_keywords": ["contrôler", "vérifier", "inspecter", "tester"],
+        "output_types": ["data", "decision"],
+        "actor_keywords": ["qualité", "contrôleur", "inspecteur"]
+      },
+      "recommendation": "Ce point de contrôle HACCP est obligatoire — ne pas supprimer ni automatiser sans validation réglementaire",
+      "active": true
+    },
+    {
+      "id": "TRAÇA-001",
+      "label": "Traçabilité alimentaire obligatoire",
+      "description": "La traçabilité des produits alimentaires doit être assurée à chaque étape",
+      "severity": "blocking",
+      "legal_ref": "Règlement CE 178/2002 Art. 18",
+      "applies_to": {
+        "action_keywords": ["recevoir", "stocker", "expédier", "transformer"],
+        "output_types": ["document", "data"],
+        "actor_keywords": []
+      },
+      "recommendation": "Documenter la traçabilité du produit à cette étape",
+      "active": true
+    }
+  ]
+}
