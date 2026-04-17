@@ -17,4 +17,5 @@ urlpatterns = [
     path('list/<int:organization_id>/', views.list_procedures, name='list_procedures'),
     path('<int:procedure_id>/archive/', views.archive_procedure, name='archive_procedure'),
     path('<int:procedure_id>/history/', views.procedure_history, name='procedure_history'),
+    path('<int:procedure_id>/', views.procedure_detail, name='procedure_detail'),
 ]

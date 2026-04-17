@@ -97,6 +97,9 @@ export const proceduresAPI = {
 
   csvTemplate: () =>
     api.get('/procedures/template/csv/', { responseType: 'blob' }),
+
+  detail: (id) =>
+    api.get(`/procedures/${id}/`),
 }
 
 // ─── Manuel ─────────────────────────────────────────

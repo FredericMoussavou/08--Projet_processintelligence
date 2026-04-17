@@ -342,3 +342,50 @@ def procedure_history(request, procedure_id):
     result = get_procedure_history(procedure_id)
     status_code = 200 if result.get('success') else 404
     return JsonResponse(result, status=status_code)
+
+def procedure_detail(request, procedure_id):
+    """
+    Retourne une procédure complète avec ses étapes.
+    GET /api/procedures/<id>/
+    """
+    from procedures.models import Procedure, Step
+    try:
+        procedure = Procedure.objects.get(id=procedure_id)
+    except Procedure.DoesNotExist:
+        return JsonResponse({'error': 'Procédure introuvable'}, status=404)
+
+    steps = Step.objects.filter(procedure=procedure).order_by('step_order')
+
+    return JsonResponse({
+        'success'    : True,
+        'id'         : procedure.id,
+        'title'      : procedure.title,
+        'description': procedure.description,
+        'service'    : procedure.service,
+        'version'    : procedure.version,
+        'status'     : procedure.status,
+        'status_display': procedure.get_status_display(),
+        'owner'      : procedure.owner.username if procedure.owner else '—',
+        'created_at' : procedure.created_at.strftime('%d/%m/%Y'),
+        'updated_at' : procedure.updated_at.strftime('%d/%m/%Y'),
+        'archived_at': procedure.archived_at.strftime('%d/%m/%Y à %H:%M') if procedure.archived_at else None,
+        'steps_count': steps.count(),
+        'steps'      : [
+            {
+                'id'               : s.id,
+                'order'            : s.step_order,
+                'title'            : s.title,
+                'action_verb'      : s.action_verb,
+                'actor_role'       : s.actor_role,
+                'tool_used'        : s.tool_used,
+                'estimated_duration': s.estimated_duration,
+                'is_recurring'     : s.is_recurring,
+                'has_condition'    : s.has_condition,
+                'trigger_type'     : s.get_trigger_type_display(),
+                'output_type'      : s.get_output_type_display(),
+                'automation_score' : s.automation_score,
+                'compliance_status': s.get_compliance_status_display(),
+            }
+            for s in steps
+        ],
+    })
