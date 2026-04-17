@@ -1,0 +1,6 @@
+order,title,action_verb,actor_role,tool_used,estimated_duration,is_recurring,trigger_type,has_condition,output_type
+1,Réception de la facture,recevoir,Comptable,Email,5,false,manual,false,document
+2,Vérification des montants,vérifier,Comptable,Excel,15,false,manual,false,data
+3,Validation par le responsable,valider,Responsable financier,,10,false,manual,false,decision
+4,Saisie dans le logiciel comptable,saisir,Comptable,Sage,10,true,manual,false,data
+5,Archivage de la facture,archiver,Comptable,SharePoint,5,false,manual,false,document
