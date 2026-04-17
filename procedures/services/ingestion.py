@@ -37,6 +37,16 @@ def extract_text_from_docx(file) -> str:
     return '\n'.join(paragraphs)
 
 
+def extract_text_from_txt(file) -> str:
+    """
+    Extrait le texte brut d'un fichier .txt.
+    """
+    if hasattr(file, 'read'):
+        return file.read().decode('utf-8')
+    with open(file, 'r', encoding='utf-8') as f:
+        return f.read()
+
+
 def extract_steps_from_csv(file) -> list:
     """
     Lit un fichier CSV structuré et retourne une liste de dictionnaires.
@@ -47,6 +57,8 @@ def extract_steps_from_csv(file) -> list:
 
     Les données étant déjà structurées, on ne passe PAS par le NLP.
     """
+    from procedures.services.parser import _calculate_automation_score
+
     steps = []
 
     # Gestion des deux cas : fichier Django ou fichier texte
@@ -60,20 +72,26 @@ def extract_steps_from_csv(file) -> list:
 
     for i, row in enumerate(reader, start=1):
         # Valeurs booléennes
-        is_recurring  = str(row.get('is_recurring', 'false')).lower() == 'true'
-        has_condition = str(row.get('has_condition', 'false')).lower() == 'true'
+        is_recur  = str(row.get('is_recurring', 'false')).lower() == 'true'
+        has_cond  = str(row.get('has_condition', 'false')).lower() == 'true'
+        verb      = row.get('action_verb', '').strip().lower()
+        tool      = row.get('tool_used', '').strip()
+
+        # Calcul du score d'automatisation basé sur les données CSV
+        auto_score = _calculate_automation_score(verb, has_cond, is_recur, tool)
 
         steps.append({
             'order'             : int(row.get('order', i)),
             'title'             : row.get('title', f'Étape {i}').strip(),
-            'action_verb'       : row.get('action_verb', '').strip(),
+            'action_verb'       : verb,
             'actor_role'        : row.get('actor_role', '').strip(),
-            'tool_used'         : row.get('tool_used', '').strip(),
+            'tool_used'         : tool,
             'estimated_duration': int(row.get('estimated_duration', 0) or 0),
-            'is_recurring'      : is_recurring,
+            'is_recurring'      : is_recur,
             'trigger_type'      : row.get('trigger_type', 'manual').strip(),
-            'has_condition'     : has_condition,
+            'has_condition'     : has_cond,
             'output_type'       : row.get('output_type', 'none').strip(),
+            'automation_score'  : auto_score,
         })
 
     return steps
@@ -82,6 +100,34 @@ def extract_steps_from_csv(file) -> list:
 # ─────────────────────────────────────────────
 # Sauvegarde en base
 # ─────────────────────────────────────────────
+
+def _create_step_dependencies(procedure: Procedure) -> None:
+    """
+    Crée automatiquement les dépendances séquentielles entre étapes.
+    Étape 1 → Étape 2 → Étape 3 ...
+
+    Appelée après chaque ingestion pour que le graphe NetworkX
+    puisse être construit correctement en Phase 3.
+    """
+    from procedures.models import StepDependency
+
+    steps = list(
+        Step.objects.filter(procedure=procedure).order_by('step_order')
+    )
+
+    # Supprime les dépendances existantes pour éviter les doublons
+    StepDependency.objects.filter(
+        from_step__procedure=procedure
+    ).delete()
+
+    # Crée les liens séquentiels
+    for i in range(len(steps) - 1):
+        StepDependency.objects.create(
+            from_step       = steps[i],
+            to_step         = steps[i + 1],
+            condition_label = ''
+        )
+
 
 def _create_procedure_and_steps(
     steps_data: list,
@@ -93,12 +139,12 @@ def _create_procedure_and_steps(
 ) -> dict:
     """
     Fonction interne partagée — crée la Procedure et ses Steps en base.
-    Utilisée par tous les modes d'ingestion (texte, PDF, DOCX, CSV).
+    Utilisée par tous les modes d'ingestion (texte, PDF, DOCX, CSV, TXT).
     """
     if not steps_data:
         return {
-            'success'   : False,
-            'error'     : 'Aucune étape détectée.',
+            'success'    : False,
+            'error'      : 'Aucune étape détectée.',
             'steps_count': 0,
         }
 
@@ -130,12 +176,33 @@ def _create_procedure_and_steps(
         )
         steps_created.append(step)
 
+    # Création automatique des dépendances séquentielles
+    _create_step_dependencies(procedure)
+
+# Déclenchement automatique de l'analyse
+    try:
+        from procedures.services.analyzer import analyze_procedure
+        analysis = analyze_procedure(procedure.id)
+    except Exception as e:
+        analysis = {
+            'scores': {'optimization': 0, 'automation': 0},
+            'anomalies': [],
+            'report_id': None,
+            'error': str(e)
+        }
+
     return {
         'success'        : True,
         'procedure_id'   : procedure.id,
         'procedure_title': procedure.title,
         'source_type'    : source_type,
         'steps_count'    : len(steps_created),
+        'analysis'       : {
+            'score_optim'    : analysis.get('scores', {}).get('optimization', 0),
+            'score_auto'     : analysis.get('scores', {}).get('automation', 0),
+            'anomalies_count': len(analysis.get('anomalies', [])),
+            'report_id'      : analysis.get('report_id'),
+        },
         'steps'          : [
             {
                 'order'           : s.step_order,
@@ -304,3 +371,49 @@ def ingest_csv(
     return _create_procedure_and_steps(
         steps_data, title, service, organization, owner, source_type='csv'
     )
+
+
+def ingest_txt(
+    file,
+    title: str,
+    service: str,
+    organization: Organization,
+    owner,
+    apply_masking: bool = True,
+) -> dict:
+    """Ingestion depuis un fichier texte (.txt)."""
+    try:
+        text = extract_text_from_txt(file)
+    except Exception as e:
+        return {'success': False, 'error': f'Erreur lecture TXT : {str(e)}'}
+
+    if not text.strip():
+        return {'success': False, 'error': 'Le fichier texte est vide.'}
+
+    masked_text = text
+    mapping = {}
+    if apply_masking:
+        masked_text, mapping = mask_text(text)
+
+    parsed = parse_procedure_text(masked_text)
+    steps_data = [
+        {
+            'order'           : p.order,
+            'title'           : p.title,
+            'action_verb'     : p.action_verb,
+            'actor_role'      : p.actor_role,
+            'tool_used'       : p.tool_used,
+            'has_condition'   : p.has_condition,
+            'is_recurring'    : p.is_recurring,
+            'output_type'     : p.output_type,
+            'automation_score': p.automation_score,
+        }
+        for p in parsed
+    ]
+
+    result = _create_procedure_and_steps(
+        steps_data, title, service, organization, owner, source_type='txt'
+    )
+    result['masking_applied'] = apply_masking
+    result['mapping'] = mapping
+    return result

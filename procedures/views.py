@@ -17,12 +17,12 @@ def ingest_procedure(request):
     - Fichier uploadé .pdf       → PDF
     - Fichier uploadé .docx      → Word
     - Fichier uploadé .csv       → CSV structuré
+    - Fichier uploadé .txt       → Texte
     """
     if request.method != 'POST':
         return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
 
     # Récupération des métadonnées
-    # Selon le type de requête, elles sont dans body JSON ou dans POST form
     if request.content_type and 'application/json' in request.content_type:
         try:
             data = json.loads(request.body)
@@ -67,18 +67,29 @@ def ingest_procedure(request):
             from procedures.services.ingestion import ingest_csv
             result = ingest_csv(uploaded_file, title, service, organization, owner)
 
+        elif filename.endswith('.txt'):
+            from procedures.services.ingestion import ingest_txt
+            result = ingest_txt(uploaded_file, title, service, organization, owner, apply_masking)
+
         else:
-            return JsonResponse({'error': 'Format de fichier non supporté. Formats acceptés : PDF, DOCX, CSV'}, status=400)
+            return JsonResponse(
+                {'error': 'Format non supporté. Formats acceptés : PDF, DOCX, CSV, TXT'},
+                status=400
+            )
 
     else:
         # Texte libre
         text = data.get('text', '')
         if not text:
-            return JsonResponse({'error': 'Champ obligatoire manquant : text ou file'}, status=400)
+            return JsonResponse(
+                {'error': 'Champ obligatoire manquant : text ou file'},
+                status=400
+            )
         result = ingest_text(text, title, service, organization, owner, apply_masking)
 
     status_code = 201 if result.get('success') else 400
     return JsonResponse(result, status=status_code)
+
 
 @csrf_exempt
 def analyze(request, procedure_id):
