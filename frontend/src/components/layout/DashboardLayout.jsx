@@ -15,6 +15,7 @@ export default function DashboardLayout() {
     { to: '/procedures',  label: 'Procédures' },
     { to: '/change-requests', label: 'Demandes' },
     { to: '/admin',           label: 'Administration' },
+    { to: '/manual', label: 'Manuel PDF' },
   ]
 
   return (

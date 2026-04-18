@@ -11,6 +11,7 @@ import DiagnosticExpress from './pages/DiagnosticExpress'
 import ChangeRequestsPage from './pages/ChangeRequestsPage'
 import AdminPage from './pages/AdminPage'
 import ProfilePage from './pages/ProfilePage'
+import ManualPage from './pages/ManualPage'
 
 // Route protégée
 function PrivateRoute({ children }) {
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="change-requests" element={<ChangeRequestsPage />} />
         <Route path="admin" element={<AdminPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="manual" element={<ManualPage />} />
         
       </Route>
 
