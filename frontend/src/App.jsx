@@ -10,6 +10,7 @@ import IngestPage from './pages/procedures/IngestPage'
 import DiagnosticExpress from './pages/DiagnosticExpress'
 import ChangeRequestsPage from './pages/ChangeRequestsPage'
 import AdminPage from './pages/AdminPage'
+import ProfilePage from './pages/ProfilePage'
 
 // Route protégée
 function PrivateRoute({ children }) {
@@ -38,6 +39,8 @@ export default function App() {
         <Route path="procedures/ingest" element={<IngestPage />} />
         <Route path="change-requests" element={<ChangeRequestsPage />} />
         <Route path="admin" element={<AdminPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+        
       </Route>
 
       {/* Redirect */}

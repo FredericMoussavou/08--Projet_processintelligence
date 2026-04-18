@@ -1,5 +1,5 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import useAuthStore from '../../store/authStore'
+import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
 
 export default function DashboardLayout() {
   const { user, currentOrg, organizations, setCurrentOrg, logout } = useAuthStore()
@@ -84,6 +84,12 @@ export default function DashboardLayout() {
         <div className="p-4 border-t border-white/10">
           <p className="text-sm font-medium">{user?.username}</p>
           <p className="text-xs text-white/60">{user?.email}</p>
+          <Link
+            to="/profile"
+            className="block text-xs text-white/60 hover:text-white mb-2 transition-colors"
+            >
+            Mon profil
+          </Link>
           <button
             onClick={handleLogout}
             className="mt-3 w-full text-xs text-white/60 hover:text-white text-left transition-colors"

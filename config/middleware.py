@@ -28,6 +28,11 @@ class JWTAuthMiddleware:
         '/api/procedures/rules/',
     ]
 
+    AUTHENTICATED_PATHS = [
+    '/api/auth/me/',
+    '/api/auth/change-password/',
+    ]
+
     # Limites par endpoint (requêtes / minute)
     RATE_LIMITS = {
         '/api/procedures/ingest/'          : 20,

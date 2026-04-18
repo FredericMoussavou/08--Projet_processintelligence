@@ -175,3 +175,33 @@ def me(request):
             for m in memberships
         ]
     })
+
+def change_password(request):
+    """
+    Change le mot de passe de l'utilisateur connecté.
+    POST /api/auth/change-password/
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Non authentifié'}, status=401)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'JSON invalide'}, status=400)
+
+    current_password = data.get('current_password', '')
+    new_password     = data.get('new_password', '')
+
+    if not request.user.check_password(current_password):
+        return JsonResponse({'error': 'Mot de passe actuel incorrect'}, status=400)
+
+    if len(new_password) < 8:
+        return JsonResponse({'error': 'Minimum 8 caractères'}, status=400)
+
+    request.user.set_password(new_password)
+    request.user.save()
+
+    return JsonResponse({'success': True, 'message': 'Mot de passe modifié'})
