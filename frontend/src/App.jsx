@@ -7,6 +7,9 @@ import DashboardHome from './pages/dashboard/DashboardHome'
 import ProceduresList from './pages/procedures/ProceduresList'
 import ProcedureDetail from './pages/procedures/ProcedureDetail'
 import IngestPage from './pages/procedures/IngestPage'
+import DiagnosticExpress from './pages/DiagnosticExpress'
+import ChangeRequestsPage from './pages/ChangeRequestsPage'
+import AdminPage from './pages/AdminPage'
 
 // Route protégée
 function PrivateRoute({ children }) {
@@ -20,6 +23,8 @@ export default function App() {
       {/* Routes publiques */}
       <Route path="/login"    element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/diagnostic" element={<DiagnosticExpress />} />
+      
 
       {/* Routes protégées */}
       <Route path="/" element={
@@ -31,6 +36,8 @@ export default function App() {
         <Route path="procedures"        element={<ProceduresList />} />
         <Route path="procedures/:id"    element={<ProcedureDetail />} />
         <Route path="procedures/ingest" element={<IngestPage />} />
+        <Route path="change-requests" element={<ChangeRequestsPage />} />
+        <Route path="admin" element={<AdminPage />} />
       </Route>
 
       {/* Redirect */}

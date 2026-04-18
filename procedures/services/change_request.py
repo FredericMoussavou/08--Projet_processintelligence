@@ -326,10 +326,13 @@ def get_change_request_status(change_request_id: int) -> dict:
     }
 
 
-def get_change_requests(procedure_id: int = None, status: str = None) -> dict:
-    """Retourne les demandes de changement filtrables."""
+def get_change_requests(procedure_id: int = None, status: str = None,
+                        organization_id: int = None) -> dict:
+    """Retourne les demandes de changement filtrées par organisation."""
     qs = ChangeRequest.objects.all().order_by('-created_at')
 
+    if organization_id:
+        qs = qs.filter(procedure__organization_id=organization_id)
     if procedure_id:
         qs = qs.filter(procedure_id=procedure_id)
     if status:
@@ -347,6 +350,7 @@ def get_change_requests(procedure_id: int = None, status: str = None) -> dict:
             'status'           : cr.status,
             'status_display'   : dict(ChangeRequest.STATUS_CHOICES).get(cr.status, ''),
             'location'         : _workflow_location(cr),
+            'change_type'      : cr.change_type,
             'created_at'       : cr.created_at.strftime('%d/%m/%Y à %H:%M'),
             'reviewed_at'      : cr.reviewed_at.strftime('%d/%m/%Y à %H:%M') if cr.reviewed_at else None,
         })

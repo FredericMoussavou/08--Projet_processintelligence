@@ -13,6 +13,8 @@ export default function DashboardLayout() {
   const navItems = [
     { to: '/',            label: 'Tableau de bord', end: true },
     { to: '/procedures',  label: 'Procédures' },
+    { to: '/change-requests', label: 'Demandes' },
+    { to: '/admin',           label: 'Administration' },
   ]
 
   return (

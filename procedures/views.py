@@ -225,9 +225,10 @@ def change_requests(request):
     URL  : /api/procedures/change-requests/
     """
     if request.method == 'GET':
-        procedure_id = request.GET.get('procedure_id')
-        status       = request.GET.get('status')
-        result = get_change_requests(procedure_id, status)
+        procedure_id    = request.GET.get('procedure_id')
+        status          = request.GET.get('status')
+        organization_id = request.GET.get('organization_id')
+        result = get_change_requests(procedure_id, status, organization_id)
         return JsonResponse(result)
 
     if request.method == 'POST':
