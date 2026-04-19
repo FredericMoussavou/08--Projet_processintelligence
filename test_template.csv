@@ -1,4 +1,0 @@
-order,title,action_verb,actor_role,tool_used,estimated_duration,is_recurring,trigger_type,has_condition,output_type
-1,Réception de la demande,recevoir,Secrétaire,Email,5,false,manual,false,document
-2,Vérification des pièces,vérifier,Responsable,Excel,15,false,manual,false,data
-3,Validation finale,valider,Directeur,,10,false,manual,false,decision

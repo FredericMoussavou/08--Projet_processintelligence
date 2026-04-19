@@ -22,3 +22,24 @@ media/
 # Fichiers système Windows
 Thumbs.db
 desktop.ini
+# Fichiers de test
+*.bpmn
+*.xyz
+test_*.pdf
+test_*.csv
+test_*.docx
+manuel_procedures.pdf
+rapport_audit_5.pdf
+template_processintelligence.csv
+
+
+# Fichiers de test générés localement
+*.bpmn
+*.xyz
+test_*.pdf
+test_*.csv
+test_*.docx
+manuel_procedures.pdf
+rapport_audit_5.pdf
+template_processintelligence.csv
+
