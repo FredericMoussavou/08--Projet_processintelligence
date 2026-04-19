@@ -1,0 +1,32 @@
+{
+  "_comment": "Marqueurs conditionnels en français. 'strict' = toujours conditionnel. 'contextual' = ambigu, demande analyse syntaxique (ex: 'lorsque' peut être temporel non-conditionnel). Les patterns sont matchés mot-à-mot après tokenisation, pas par substring (évite 'si' matchant dans 'basique').",
+
+  "strict_conditionals": [
+    "si",
+    "sinon",
+    "sauf si",
+    "à condition que",
+    "à condition de",
+    "à moins que",
+    "à moins de",
+    "en cas de",
+    "dans le cas où",
+    "dans l'hypothèse où",
+    "au cas où",
+    "pourvu que",
+    "dans la mesure où",
+    "selon que",
+    "suivant que"
+  ],
+
+  "contextual_conditionals": {
+    "_comment": "Ces mots sont conditionnels seulement si suivis d'un verbe conjugué ou d'un complément. 'Lorsque le manager valide' = conditionnel. 'Lorsque midi sonne' = temporel pur.",
+    "patterns": ["lorsque", "quand", "dès lors que"]
+  },
+
+  "condition_clause_markers": {
+    "_comment": "Tokens syntaxiques spaCy (dep_ ou morph) qui signalent une clause subordonnée conditionnelle. Utilisés en combinaison avec les patterns lexicaux.",
+    "deps": ["mark"],
+    "subordinating_tags": ["SCONJ"]
+  }
+}

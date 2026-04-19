@@ -1,0 +1,68 @@
+{
+  "_comment": "Patterns de récurrence détectés dans le texte. Chaque entrée a un 'type' (periodic/event-driven/continuous) et une 'frequency' normalisée pour stockage en base. Les patterns sont matchés en lowercase sur le texte brut. Un marqueur 'requires_context' signale les cas où le mot-clé n'est pas suffisant (ex: 'lorsque' peut être temporel-conditionnel ou purement temporel).",
+
+  "daily": {
+    "frequency": "daily",
+    "type": "periodic",
+    "patterns": [
+      "chaque jour", "tous les jours", "quotidien", "quotidienne", "quotidiennement",
+      "journalier", "journalière", "au jour le jour", "chaque matin", "chaque soir"
+    ]
+  },
+
+  "weekly": {
+    "frequency": "weekly",
+    "type": "periodic",
+    "patterns": [
+      "chaque semaine", "toutes les semaines", "hebdomadaire", "hebdomadairement",
+      "une fois par semaine", "chaque lundi", "chaque mardi", "chaque mercredi",
+      "chaque jeudi", "chaque vendredi"
+    ]
+  },
+
+  "monthly": {
+    "frequency": "monthly",
+    "type": "periodic",
+    "patterns": [
+      "chaque mois", "tous les mois", "mensuel", "mensuelle", "mensuellement",
+      "une fois par mois", "en fin de mois", "en début de mois"
+    ]
+  },
+
+  "quarterly": {
+    "frequency": "quarterly",
+    "type": "periodic",
+    "patterns": [
+      "chaque trimestre", "tous les trimestres", "trimestriel", "trimestrielle",
+      "trimestriellement", "une fois par trimestre"
+    ]
+  },
+
+  "yearly": {
+    "frequency": "yearly",
+    "type": "periodic",
+    "patterns": [
+      "chaque année", "tous les ans", "annuel", "annuelle", "annuellement",
+      "une fois par an", "en fin d'année", "en début d'année"
+    ]
+  },
+
+  "continuous": {
+    "frequency": "continuous",
+    "type": "continuous",
+    "patterns": [
+      "régulièrement", "périodiquement", "en continu", "en permanence",
+      "tout au long de", "en temps réel"
+    ]
+  },
+
+  "event_driven": {
+    "frequency": "on_event",
+    "type": "event-driven",
+    "patterns": [
+      "à chaque fois que", "à chaque", "dès que", "dès réception",
+      "à réception de", "à la demande de", "sur demande de", "à l'arrivée de",
+      "lors de la réception", "à chaque nouvelle", "à chaque nouveau"
+    ]
+  }
+}

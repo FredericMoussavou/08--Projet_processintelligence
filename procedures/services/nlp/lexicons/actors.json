@@ -1,0 +1,39 @@
+{
+  "_comment": "Acteurs/rôles typiques en entreprise. Les aliases sont fusionnés vers la forme canonique lors de la normalisation. Cela résout le problème 'Le manager' / 'manager' / 'les managers' / 'Manager' → tous canonicalisés en 'Manager'. Les 'stopwords_prefix' sont des déterminants/adjectifs à retirer du groupe nominal avant matching.",
+
+  "canonical_roles": {
+    "Manager":              ["manager", "managers", "chef d'équipe", "responsable hiérarchique"],
+    "Directeur":            ["directeur", "directrice", "dirigeant", "dg", "directeur général"],
+    "Responsable":          ["responsable", "resp"],
+    "Comptable":            ["comptable", "comptables"],
+    "RH":                   ["rh", "ressources humaines", "service rh", "drh", "responsable rh", "gestionnaire rh"],
+    "Commercial":           ["commercial", "commerciale", "commerciaux", "vendeur", "vendeuse"],
+    "Client":               ["client", "cliente", "clients"],
+    "Fournisseur":          ["fournisseur", "fournisseurs", "prestataire", "prestataires"],
+    "Assistant":            ["assistant", "assistante", "secrétaire"],
+    "Gestionnaire":         ["gestionnaire", "gestionnaires"],
+    "Contrôleur de gestion":["contrôleur de gestion", "contrôleuse de gestion", "contrôleur"],
+    "Auditeur":             ["auditeur", "auditrice", "auditeurs"],
+    "Juriste":              ["juriste", "juristes", "service juridique"],
+    "Candidat":             ["candidat", "candidate", "candidats"],
+    "Salarié":              ["salarié", "salariée", "salariés", "employé", "employée", "employés", "collaborateur", "collaboratrice"],
+    "Équipe":               ["équipe", "équipes", "team"],
+    "Service comptabilité": ["service comptabilité", "service compta", "comptabilité"],
+    "Service informatique": ["service informatique", "it", "dsi", "service it"],
+    "Service achats":       ["service achats", "achats", "acheteur", "acheteuse"],
+    "Service commercial":   ["service commercial", "service des ventes"],
+    "Direction":            ["direction", "la direction"],
+    "Utilisateur":          ["utilisateur", "utilisatrice", "utilisateurs"]
+  },
+
+  "stopwords_prefix": [
+    "le", "la", "les", "l'", "un", "une", "des",
+    "ce", "cette", "ces", "mon", "ma", "mes", "ton", "ta", "tes",
+    "son", "sa", "ses", "notre", "nos", "votre", "vos", "leur", "leurs"
+  ],
+
+  "impersonal_subjects": {
+    "_comment": "Sujets impersonnels à résoudre par anaphore vers le dernier acteur nommé.",
+    "patterns": ["on", "il", "elle", "ils", "elles", "ce dernier", "cette dernière"]
+  }
+}

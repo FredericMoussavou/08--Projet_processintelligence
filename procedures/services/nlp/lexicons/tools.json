@@ -1,0 +1,47 @@
+{
+  "_comment": "Détection d'outils en deux couches : (1) liste d'outils connus avec leur nom canonique, (2) prépositions instrumentales qui introduisent un outil ('via SAP', 'sur Excel', 'dans Notion'). Les outils connus sont matchés comme tokens entiers (pas substring) pour éviter 'mail' dans 'réclamation'.",
+
+  "known_tools": {
+    "Excel":          ["excel", "xls", "xlsx"],
+    "Word":           ["word", "doc", "docx"],
+    "PowerPoint":     ["powerpoint", "ppt", "pptx"],
+    "Outlook":        ["outlook"],
+    "Teams":          ["teams"],
+    "Slack":          ["slack"],
+    "SAP":            ["sap"],
+    "Sage":           ["sage"],
+    "Odoo":           ["odoo"],
+    "Salesforce":     ["salesforce"],
+    "HubSpot":        ["hubspot"],
+    "Jira":           ["jira"],
+    "Gmail":          ["gmail"],
+    "Google Drive":   ["google drive", "gdrive"],
+    "SharePoint":     ["sharepoint"],
+    "Notion":         ["notion"],
+    "Trello":         ["trello"],
+    "Asana":          ["asana"],
+    "Monday":         ["monday"],
+    "Zendesk":        ["zendesk"],
+    "Email":          ["email", "mail", "e-mail", "courriel"],
+    "Téléphone":      ["téléphone", "tel"],
+    "PDF":            ["pdf"],
+    "ERP":            ["erp"],
+    "CRM":            ["crm"],
+    "GED":            ["ged"],
+    "DocuSign":       ["docusign"],
+    "Dropbox":        ["dropbox"],
+    "OneDrive":       ["onedrive"],
+    "Zoom":           ["zoom"],
+    "Confluence":     ["confluence"]
+  },
+
+  "instrumental_prepositions": {
+    "_comment": "Prépositions qui, suivies d'un NOUN/PROPN, indiquent un outil/support. Score de confiance variable : 'via' et 'sur' sont très fiables, 'dans' et 'avec' plus ambigus.",
+    "high_confidence": ["via", "par l'intermédiaire de", "au moyen de", "à l'aide de"],
+    "medium_confidence": ["sur", "dans", "avec", "par"],
+    "exclusion_nouns": [
+      "délai", "heure", "minute", "jour", "semaine", "mois", "année",
+      "temps", "exemple", "cas", "ensemble", "cadre", "sujet", "papier"
+    ]
+  }
+}

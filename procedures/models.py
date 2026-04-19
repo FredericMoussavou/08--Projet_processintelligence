@@ -336,3 +336,49 @@ class ProcedureVersion(models.Model):
             created_by     = user,
             reason         = reason,
         )
+    
+class MonthlyUsage(models.Model):
+    """
+    Usage mensuel d'une organisation pour l'application des quotas.
+
+    Un record unique par (organisation, year, month). Le compteur est
+    incrémenté à chaque analyse de procédure (via Organization.increment_monthly_analyses()).
+
+    Requête typique :
+        usage = MonthlyUsage.objects.get(organization=org, year=2026, month=4)
+        print(usage.analyses_count)   # 42
+
+    Pour les statistiques admin :
+        # Top organisations en consommation ce mois
+        from django.utils import timezone
+        now = timezone.now()
+        top = MonthlyUsage.objects.filter(
+            year=now.year, month=now.month
+        ).order_by('-analyses_count')[:10]
+    """
+
+    organization   = models.ForeignKey(
+        'organizations.Organization',
+        on_delete=models.CASCADE,
+        related_name='monthly_usages',
+    )
+    year           = models.PositiveSmallIntegerField(verbose_name="Année")
+    month          = models.PositiveSmallIntegerField(verbose_name="Mois (1-12)")
+    analyses_count = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Nombre d'analyses effectuées"
+    )
+    created_at     = models.DateTimeField(auto_now_add=True)
+    updated_at     = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name        = "Usage mensuel"
+        verbose_name_plural = "Usages mensuels"
+        ordering            = ['-year', '-month']
+        unique_together     = ('organization', 'year', 'month')
+        indexes = [
+            models.Index(fields=['organization', '-year', '-month']),
+        ]
+
+    def __str__(self):
+        return f"{self.organization.name} — {self.month:02d}/{self.year} : {self.analyses_count} analyses"
