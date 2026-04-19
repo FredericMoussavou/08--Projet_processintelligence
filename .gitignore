@@ -43,3 +43,10 @@ manuel_procedures.pdf
 rapport_audit_5.pdf
 template_processintelligence.csv
 
+
+# Backups locaux lors de refactorings
+*.backup
+*.py.backup
+
+# Fichiers générés localement pour diagnostic
+project_tree.txt

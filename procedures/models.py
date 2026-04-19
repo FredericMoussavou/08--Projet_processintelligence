@@ -382,3 +382,132 @@ class MonthlyUsage(models.Model):
 
     def __str__(self):
         return f"{self.organization.name} — {self.month:02d}/{self.year} : {self.analyses_count} analyses"
+
+class LLMCallLog(models.Model):
+    """
+    Log d'un appel à l'API LLM pour extraction de procédure.
+
+    Permet de suivre :
+        - Les coûts mensuels (via input_tokens + output_tokens × prix par token)
+        - Le taux de cache hit (ratio d'économie)
+        - Le taux de fallback vers le parser par règles (indicateur de santé API)
+        - La latence moyenne par modèle
+
+    Requête typique pour un dashboard admin :
+        from django.db.models import Sum
+        this_month = LLMCallLog.objects.filter(
+            created_at__gte=start_of_month,
+            cache_hit=False,
+            fallback_used=False,
+        ).aggregate(
+            total_input=Sum('input_tokens'),
+            total_output=Sum('output_tokens'),
+        )
+        # Coût estimé Claude Haiku 4.5 :
+        cost_usd = (this_month['total_input'] / 1_000_000) * 1.0 + \
+                   (this_month['total_output'] / 1_000_000) * 5.0
+    """
+
+    organization = models.ForeignKey(
+        'organizations.Organization',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='llm_calls',
+    )
+    text_length   = models.PositiveIntegerField(verbose_name="Longueur du texte (chars)")
+    duration_ms   = models.PositiveIntegerField(verbose_name="Durée de l'appel (ms)")
+    input_tokens  = models.PositiveIntegerField(default=0)
+    output_tokens = models.PositiveIntegerField(default=0)
+    model         = models.CharField(max_length=50, verbose_name="Modèle utilisé")
+    cache_hit     = models.BooleanField(default=False, verbose_name="Cache hit ?")
+    fallback_used = models.BooleanField(
+        default=False,
+        verbose_name="Fallback règles utilisé ?"
+    )
+    created_at    = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name        = "Log d'appel LLM"
+        verbose_name_plural = "Logs d'appels LLM"
+        ordering            = ['-created_at']
+        indexes = [
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['organization', '-created_at']),
+        ]
+
+    def __str__(self):
+        if self.cache_hit:
+            status = "cache"
+        elif self.fallback_used:
+            status = "fallback"
+        else:
+            status = "api"
+        return f"LLMCall [{status}] {self.model} — {self.created_at.strftime('%d/%m %H:%M')}"
+
+    @property
+    def estimated_cost_usd(self):
+        """
+        Calcule le coût estimé en USD selon le modèle.
+        Tarifs Claude (à ajuster si changement) :
+            haiku-4-5  : 1$ / 5$   per M tokens (input / output)
+            sonnet-4-6 : 3$ / 15$  per M tokens
+            opus-4-7   : 15$ / 75$ per M tokens
+        """
+        pricing = {
+            'claude-haiku-4-5-20251001': (1.0, 5.0),
+            'claude-sonnet-4-6':          (3.0, 15.0),
+            'claude-opus-4-7':            (15.0, 75.0),
+        }
+        in_price, out_price = pricing.get(self.model, (1.0, 5.0))
+        return (self.input_tokens / 1_000_000) * in_price + \
+               (self.output_tokens / 1_000_000) * out_price
+
+
+class MaskingConsent(models.Model):
+    """
+    Consentement explicite pour envoyer du texte non-masqué au LLM externe.
+
+    Sert de preuve RGPD en cas d'audit CNIL ou de demande d'information par
+    un utilisateur (droit à l'information).
+
+    Un nouvel enregistrement est créé à CHAQUE désactivation du toggle par
+    l'utilisateur — on ne s'appuie pas sur un consentement ancien.
+    """
+
+    user          = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='masking_consents',
+        help_text="Utilisateur authentifié, null si endpoint public",
+    )
+    session_hash  = models.CharField(
+        max_length=64, blank=True, default='',
+        help_text="Hash SHA-256 de l'IP + user-agent (pour utilisateurs anonymes)",
+    )
+    endpoint      = models.CharField(
+        max_length=100,
+        help_text="Endpoint concerné, ex: /api/procedures/ingest/",
+    )
+    consent_text  = models.TextField(
+        help_text="Texte exact présenté à l'utilisateur au moment du consentement",
+    )
+    user_agent    = models.CharField(max_length=255, blank=True, default='')
+    ip_last_octet = models.CharField(
+        max_length=3, blank=True, default='',
+        help_text="Dernier octet de l'IP (les 3 autres sont anonymisés pour RGPD)",
+    )
+    created_at    = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name        = "Consentement désactivation masquage"
+        verbose_name_plural = "Consentements désactivation masquage"
+        ordering            = ['-created_at']
+        indexes = [
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['user', '-created_at']),
+        ]
+
+    def __str__(self):
+        who = self.user.username if self.user else f"anon#{self.session_hash[:8]}"
+        return f"Consentement de {who} — {self.created_at.strftime('%d/%m/%Y %H:%M')}"
