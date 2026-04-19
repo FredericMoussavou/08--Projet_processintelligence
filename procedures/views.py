@@ -17,7 +17,7 @@ from procedures.services.change_request import (
 )
 from django.conf import settings
 from functools import wraps
-
+from procedures.services.consent import record_masking_consent
 
 @csrf_exempt
 def ingest_procedure(request):
@@ -59,8 +59,18 @@ def ingest_procedure(request):
     except Organization.DoesNotExist:
         return JsonResponse({'error': 'Organisation introuvable'}, status=404)
 
-    owner         = request.user if request.user.is_authenticated else None
-    apply_masking = str(data.get('apply_masking', 'true')).lower() == 'true'
+    owner              = request.user if request.user.is_authenticated else None
+    is_public_endpoint = not request.user.is_authenticated
+    apply_masking      = str(data.get('apply_masking', 'true')).lower() == 'true'
+    consent_text       = data.get('masking_consent_text', '')
+
+#     # RGPD : si l'utilisateur a désactivé le masquage, on trace son consentement
+    if not apply_masking:
+        record_masking_consent(
+            request=request,
+            endpoint=request.path,
+            consent_text=consent_text,
+        )
 
     # Routage selon le type de source
     if uploaded_file:
@@ -73,7 +83,10 @@ def ingest_procedure(request):
 
         if filename.endswith('.pdf'):
             from procedures.services.ingestion import ingest_pdf
-            result = ingest_pdf(uploaded_file, title, service, organization, owner, apply_masking)
+            result = ingest_pdf(
+                 uploaded_file, title, service, organization, owner,
+                 apply_masking, is_public_endpoint=is_public_endpoint,
+             )
 
         elif filename.endswith('.docx'):
             from procedures.services.ingestion import ingest_docx
@@ -81,7 +94,11 @@ def ingest_procedure(request):
 
         elif filename.endswith('.csv'):
             from procedures.services.ingestion import ingest_csv
-            result = ingest_csv(uploaded_file, title, service, organization, owner)
+            result = ingest_csv(
+            uploaded_file, title, service, organization, owner,
+             is_public_endpoint=is_public_endpoint,
+            )
+
 
         elif filename.endswith('.txt'):
             from procedures.services.ingestion import ingest_txt

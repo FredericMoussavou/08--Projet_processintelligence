@@ -13,6 +13,23 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 
+# -----------------------------------------------------------------------------
+# LLM Parser — Anthropic Claude
+# -----------------------------------------------------------------------------
+ 
+# Clé API Anthropic. Si absente, le dispatcher retombe automatiquement sur spaCy.
+# Obtenir une clé sur https://console.anthropic.com/
+# IMPORTANT : ne jamais committer cette clé dans Git. La mettre dans le .env.
+ANTHROPIC_API_KEY = env('ANTHROPIC_API_KEY', default='')
+ 
+# Kill switch global. Si False, spaCy est utilisé partout même pour les orgs Pro.
+# Utile pour désactiver rapidement en cas d'incident avec l'API Anthropic.
+LLM_PARSER_ENABLED = env.bool('LLM_PARSER_ENABLED', default=False)
+ 
+# Modèle Claude utilisé par défaut. Les organisations Business peuvent utiliser
+# un modèle plus précis (voir organizations/plans.py).
+LLM_PARSER_MODEL = env('LLM_PARSER_MODEL', default='claude-haiku-4-5-20251001')
+
 # Apps installées
 INSTALLED_APPS = [
     'django.contrib.admin',
