@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { proceduresAPI, changeRequestsAPI } from '../../services/api'
 import useAuthStore from '../../store/authStore'
+import FeatureLock from '../../components/ui/FeatureLock'
 
 function ScoreBar({ score, label, color }) {
   const pct = Math.round(score * 100)
@@ -226,12 +227,14 @@ export default function ProcedureDetail() {
           >
             PDF
           </button>
-          <button
-            onClick={handleExportBpmn}
-            className="px-4 py-2 bg-white border border-light text-primary rounded-lg text-sm hover:bg-background transition-colors"
-          >
-            BPMN
-          </button>
+          <FeatureLock feature="export_bpmn" requiredPlan="Pro">
+            <button
+              onClick={handleExportBpmn}
+              className="px-4 py-2 bg-white border border-light text-primary rounded-lg text-sm hover:bg-background transition-colors"
+            >
+              BPMN
+            </button>
+          </FeatureLock>
           {procedure.status !== 'archived' && canApprove() && (
             <button
               onClick={handleArchive}
@@ -294,130 +297,134 @@ export default function ProcedureDetail() {
           </div>
         </div>
       )}
+
       {activeTab === 'steps' && (
-  <div className="space-y-3">
-    {/* Barre d'actions */}
-    <div className="flex items-center justify-between">
-      <p className="text-sm text-gray-500">
-        {procedure.steps_count} étape{procedure.steps_count > 1 ? 's' : ''}
-      </p>
-      <div className="flex gap-2">
-        <button
-          onClick={handleExportPdf}
-          className="px-3 py-1.5 bg-white border border-light text-primary rounded-lg text-xs hover:bg-background transition-colors"
-        >
-          Télécharger PDF
-        </button>
-        <button
-          onClick={handleExportBpmn}
-          className="px-3 py-1.5 bg-white border border-light text-primary rounded-lg text-xs hover:bg-background transition-colors"
-        >
-          Télécharger BPMN
-        </button>
-      </div>
-    </div>
-
-    {/* Étapes */}
-    {procedure.steps?.length === 0 ? (
-      <div className="bg-white rounded-xl border border-light p-12 text-center">
-        <p className="text-gray-400 text-sm">Aucune étape enregistrée</p>
-      </div>
-    ) : (
-      <div className="bg-white rounded-xl border border-light overflow-hidden">
-        {procedure.steps?.map((step, index) => (
-          <div
-            key={step.id}
-            className={`p-5 ${index < procedure.steps.length - 1 ? 'border-b border-light' : ''}`}
-          >
-            <div className="flex items-start gap-4">
-              {/* Numéro */}
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center">
-                <span className="text-xs font-bold text-secondary">{step.order}</span>
-              </div>
-
-              {/* Contenu */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-primary">{step.title}</p>
-
-                {/* Métadonnées */}
-                <div className="flex flex-wrap gap-3 mt-2">
-                  {step.actor_role && (
-                    <span className="flex items-center gap-1 text-xs text-gray-500">
-                      <span className="text-gray-300">Acteur</span>
-                      <span className="font-medium text-primary">{step.actor_role}</span>
-                    </span>
-                  )}
-                  {step.action_verb && (
-                    <span className="flex items-center gap-1 text-xs text-gray-500">
-                      <span className="text-gray-300">Verbe</span>
-                      <span className="font-medium text-secondary">{step.action_verb}</span>
-                    </span>
-                  )}
-                  {step.tool_used && (
-                    <span className="flex items-center gap-1 text-xs text-gray-500">
-                      <span className="text-gray-300">Outil</span>
-                      <span className="font-medium text-primary">{step.tool_used}</span>
-                    </span>
-                  )}
-                  {step.estimated_duration > 0 && (
-                    <span className="text-xs text-gray-400">
-                      {step.estimated_duration} min
-                    </span>
-                  )}
-                </div>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <span className="text-xs bg-background text-gray-500 px-2 py-0.5 rounded-full">
-                    {step.output_type}
-                  </span>
-                  <span className="text-xs bg-background text-gray-500 px-2 py-0.5 rounded-full">
-                    {step.trigger_type}
-                  </span>
-                  {step.is_recurring && (
-                    <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">
-                      Récurrent
-                    </span>
-                  )}
-                  {step.has_condition && (
-                    <span className="text-xs bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-full">
-                      Condition
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Score + conformité */}
-              <div className="flex-shrink-0 text-right space-y-1">
-                <div>
-                  <p className="text-xs text-gray-400">Auto.</p>
-                  <p className={`text-sm font-bold ${
-                    step.automation_score >= 0.7 ? 'text-green-600' :
-                    step.automation_score >= 0.4 ? 'text-orange-500' :
-                    'text-red-500'
-                  }`}>
-                    {Math.round(step.automation_score * 100)}%
-                  </p>
-                </div>
-                <ComplianceBadge status={
-                  step.compliance_status === 'Conforme' ? 'compliant' :
-                  step.compliance_status === 'À vérifier' ? 'warning' : 'non_compliant'
-                } />
-              </div>
+        <div className="space-y-3">
+          {/* Barre d'actions */}
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">
+              {procedure.steps_count} étape{procedure.steps_count > 1 ? 's' : ''}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={handleExportPdf}
+                className="px-3 py-1.5 bg-white border border-light text-primary rounded-lg text-xs hover:bg-background transition-colors"
+              >
+                Télécharger PDF
+              </button>
+              <FeatureLock feature="export_bpmn" requiredPlan="Pro">
+                <button
+                  onClick={handleExportBpmn}
+                  className="px-3 py-1.5 bg-white border border-light text-primary rounded-lg text-xs hover:bg-background transition-colors"
+                >
+                  Télécharger BPMN
+                </button>
+              </FeatureLock>
             </div>
-
-            {/* Connecteur visuel */}
-            {index < procedure.steps.length - 1 && (
-              <div className="ml-4 mt-3 flex items-center gap-2">
-                <div className="w-0.5 h-4 bg-light ml-3.5"/>
-              </div>
-            )}
           </div>
-        ))}
-      </div>
-    )}
-  </div>
-)}
+
+          {/* Étapes */}
+          {procedure.steps?.length === 0 ? (
+            <div className="bg-white rounded-xl border border-light p-12 text-center">
+              <p className="text-gray-400 text-sm">Aucune étape enregistrée</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-light overflow-hidden">
+              {procedure.steps?.map((step, index) => (
+                <div
+                  key={step.id}
+                  className={`p-5 ${index < procedure.steps.length - 1 ? 'border-b border-light' : ''}`}
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Numéro */}
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center">
+                      <span className="text-xs font-bold text-secondary">{step.order}</span>
+                    </div>
+
+                    {/* Contenu */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-primary">{step.title}</p>
+
+                      {/* Métadonnées */}
+                      <div className="flex flex-wrap gap-3 mt-2">
+                        {step.actor_role && (
+                          <span className="flex items-center gap-1 text-xs text-gray-500">
+                            <span className="text-gray-300">Acteur</span>
+                            <span className="font-medium text-primary">{step.actor_role}</span>
+                          </span>
+                        )}
+                        {step.action_verb && (
+                          <span className="flex items-center gap-1 text-xs text-gray-500">
+                            <span className="text-gray-300">Verbe</span>
+                            <span className="font-medium text-secondary">{step.action_verb}</span>
+                          </span>
+                        )}
+                        {step.tool_used && (
+                          <span className="flex items-center gap-1 text-xs text-gray-500">
+                            <span className="text-gray-300">Outil</span>
+                            <span className="font-medium text-primary">{step.tool_used}</span>
+                          </span>
+                        )}
+                        {step.estimated_duration > 0 && (
+                          <span className="text-xs text-gray-400">
+                            {step.estimated_duration} min
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Tags */}
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <span className="text-xs bg-background text-gray-500 px-2 py-0.5 rounded-full">
+                          {step.output_type}
+                        </span>
+                        <span className="text-xs bg-background text-gray-500 px-2 py-0.5 rounded-full">
+                          {step.trigger_type}
+                        </span>
+                        {step.is_recurring && (
+                          <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">
+                            Récurrent
+                          </span>
+                        )}
+                        {step.has_condition && (
+                          <span className="text-xs bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-full">
+                            Condition
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Score + conformité */}
+                    <div className="flex-shrink-0 text-right space-y-1">
+                      <div>
+                        <p className="text-xs text-gray-400">Auto.</p>
+                        <p className={`text-sm font-bold ${
+                          step.automation_score >= 0.7 ? 'text-green-600' :
+                          step.automation_score >= 0.4 ? 'text-orange-500' :
+                          'text-red-500'
+                        }`}>
+                          {Math.round(step.automation_score * 100)}%
+                        </p>
+                      </div>
+                      <ComplianceBadge status={
+                        step.compliance_status === 'Conforme' ? 'compliant' :
+                        step.compliance_status === 'À vérifier' ? 'warning' : 'non_compliant'
+                      } />
+                    </div>
+                  </div>
+
+                  {/* Connecteur visuel */}
+                  {index < procedure.steps.length - 1 && (
+                    <div className="ml-4 mt-3 flex items-center gap-2">
+                      <div className="w-0.5 h-4 bg-light ml-3.5"/>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {activeTab === 'audit' && (
         <div className="space-y-4">
           {!report ? (
