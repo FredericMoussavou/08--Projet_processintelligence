@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { proceduresAPI, changeRequestsAPI } from '../../services/api'
 import useAuthStore from '../../store/authStore'
+import usePlanInfo from '../../hooks/usePlanInfo'
+import useOrgUsage from '../../hooks/useOrgUsage'
+import PlanBadge from '../../components/ui/PlanBadge'
+import QuotaBar from '../../components/ui/QuotaBar'
 
 function ScoreRing({ score, label, color }) {
   const pct    = Math.round(score * 100)
@@ -80,6 +84,10 @@ export default function DashboardHome() {
   const [changeReqs,    setChangeReqs]    = useState([])
   const [loading,       setLoading]       = useState(true)
 
+  // Plan et usage de l'organisation (via React Query, mis en cache)
+  const { data: planData }  = usePlanInfo(currentOrg?.id)
+  const { data: usageData } = useOrgUsage(currentOrg?.id)
+
   useEffect(() => {
     if (!currentOrg) return
 
@@ -138,6 +146,51 @@ export default function DashboardHome() {
         </Link>
       </div>
 
+      {/* Bloc "Mon plan" */}
+      {planData && usageData && (
+        <div className="bg-white rounded-xl border border-light p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <h3 className="font-semibold text-primary">Mon plan</h3>
+              <PlanBadge planId={planData.plan.id} />
+            </div>
+            <p className="text-xs text-gray-400">
+              {planData.plan.description}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-6">
+            {/* Analyses mensuelles */}
+            <div className="col-span-2">
+              <QuotaBar
+                count={usageData.analyses.count}
+                limit={usageData.analyses.limit}
+                percentageUsed={usageData.analyses.percentage_used}
+                quotaReached={usageData.analyses.quota_reached}
+              />
+            </div>
+
+            {/* Procédures et utilisateurs */}
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Procédures</span>
+                <span className="font-medium text-primary">
+                  {usageData.procedures.count}
+                  {usageData.procedures.limit !== null && ` / ${usageData.procedures.limit}`}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Utilisateurs</span>
+                <span className="font-medium text-primary">
+                  {usageData.users.count}
+                  {usageData.users.limit !== null && ` / ${usageData.users.limit}`}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats cards */}
       <div className="grid grid-cols-4 gap-4">
         {[
@@ -166,7 +219,7 @@ export default function DashboardHome() {
 
           {recent.length === 0 ? (
             <div className="text-center py-8 text-gray-400 text-sm">
-              Aucune procédure — 
+              Aucune procédure —
               <Link to="/procedures/ingest" className="text-secondary hover:underline ml-1">
                 créez-en une
               </Link>

@@ -1,9 +1,17 @@
 import useAuthStore from '../../store/authStore'
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
+import usePlanInfo from '../../hooks/usePlanInfo'
+import useOrgUsage from '../../hooks/useOrgUsage'
+import PlanBadge from '../ui/PlanBadge'
+import QuotaBar from '../ui/QuotaBar'
 
 export default function DashboardLayout() {
   const { user, currentOrg, organizations, setCurrentOrg, logout } = useAuthStore()
   const navigate = useNavigate()
+
+  // Récupère plan et usage de l'organisation courante
+  const { data: planData }  = usePlanInfo(currentOrg?.id)
+  const { data: usageData } = useOrgUsage(currentOrg?.id)
 
   const handleLogout = () => {
     logout()
@@ -50,14 +58,53 @@ export default function DashboardLayout() {
           </div>
         )}
 
-        {/* Organisation courante */}
-        {currentOrg && organizations.length === 1 && (
-          <div className="px-6 py-3 border-b border-white/10">
-            <p className="text-xs text-white/60">Organisation</p>
-            <p className="text-sm font-medium">{currentOrg.name}</p>
-            <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full mt-1 inline-block">
-              {currentOrg.role}
-            </span>
+        {/* Organisation courante + badge plan + quota */}
+        {currentOrg && (
+          <div className="px-6 py-3 border-b border-white/10 space-y-2">
+            {organizations.length === 1 && (
+              <>
+                <p className="text-xs text-white/60">Organisation</p>
+                <p className="text-sm font-medium">{currentOrg.name}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
+                    {currentOrg.role}
+                  </span>
+                  {planData?.plan?.id && (
+                    <PlanBadge planId={planData.plan.id} size="sm" />
+                  )}
+                </div>
+              </>
+            )}
+            {organizations.length > 1 && planData?.plan?.id && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-white/60">Plan :</span>
+                <PlanBadge planId={planData.plan.id} size="sm" />
+              </div>
+            )}
+
+            {/* Mini QuotaBar (analyses du mois) */}
+            {usageData?.analyses && (
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-white/60">Analyses/mois</span>
+                  <span className="text-xs text-white/80 font-medium">
+                    {usageData.analyses.count}
+                    {usageData.analyses.limit !== null && ` / ${usageData.analyses.limit}`}
+                  </span>
+                </div>
+                {usageData.analyses.limit !== null ? (
+                  <QuotaBar
+                    count={usageData.analyses.count}
+                    limit={usageData.analyses.limit}
+                    percentageUsed={usageData.analyses.percentage_used}
+                    quotaReached={usageData.analyses.quota_reached}
+                    compact
+                  />
+                ) : (
+                  <div className="h-2 rounded-full bg-gradient-to-r from-purple-400 via-purple-300 to-purple-400" />
+                )}
+              </div>
+            )}
           </div>
         )}
 

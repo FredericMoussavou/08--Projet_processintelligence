@@ -1,8 +1,18 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
+import MaskingToggle from '../components/ui/MaskingToggle'
+import EngineBadge from '../components/ui/EngineBadge'
 
 const API_BASE = 'http://127.0.0.1:8000/api'
+
+// Doit correspondre à REQUIRED_CONSENT_KEYWORDS côté backend
+const DEFAULT_CONSENT_TEXT = (
+  "En désactivant le masquage des données personnelles, je consens " +
+  "au transfert de mon texte à Anthropic (États-Unis) pour analyse. " +
+  "Je certifie que ce texte ne contient pas de données personnelles " +
+  "réelles ou que j'ai le droit de les partager."
+)
 
 function ScoreBar({ score, label }) {
   const pct   = Math.round(score * 100)
@@ -24,10 +34,17 @@ function ScoreBar({ score, label }) {
 }
 
 export default function DiagnosticExpress() {
-  const [text,    setText]    = useState('')
-  const [loading, setLoading] = useState(false)
-  const [result,  setResult]  = useState(null)
-  const [error,   setError]   = useState('')
+  const [text,         setText]         = useState('')
+  const [loading,      setLoading]      = useState(false)
+  const [result,       setResult]       = useState(null)
+  const [error,        setError]        = useState('')
+  const [applyMasking, setApplyMasking] = useState(true)
+  const [consentText,  setConsentText]  = useState('')
+
+  const handleMaskingChange = (enabled, consent) => {
+    setApplyMasking(enabled)
+    setConsentText(enabled ? '' : (consent || DEFAULT_CONSENT_TEXT))
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -39,9 +56,10 @@ export default function DiagnosticExpress() {
       // Ingestion sans authentification
       const res = await axios.post(`${API_BASE}/procedures/ingest/`, {
         text,
-        title          : 'Diagnostic Express',
-        organization_id: 1,
-        apply_masking  : true,
+        title                : 'Diagnostic Express',
+        organization_id      : 1,
+        apply_masking        : applyMasking,
+        masking_consent_text : consentText,
       })
 
       setResult(res.data)
@@ -125,11 +143,12 @@ export default function DiagnosticExpress() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 text-xs text-gray-400">
-                <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-                Masquage RGPD automatique — vos données sensibles sont anonymisées avant analyse
+              {/* Masquage RGPD */}
+              <div className="p-4 bg-blue-50 rounded-xl border border-light">
+                <MaskingToggle
+                  enabled={applyMasking}
+                  onChange={handleMaskingChange}
+                />
               </div>
 
               <button
@@ -154,26 +173,33 @@ export default function DiagnosticExpress() {
           <div className="space-y-6">
 
             {/* Header résultat */}
-            <div className="bg-green-50 border border-green-200 rounded-2xl p-6 flex items-start justify-between">
-              <div>
-                <h3 className="font-semibold text-green-700 text-lg">
-                  ✅ Diagnostic terminé
-                </h3>
-                <p className="text-sm text-green-600 mt-1">
-                  {result.steps_count} étape{result.steps_count > 1 ? 's' : ''} analysée{result.steps_count > 1 ? 's' : ''}
-                  {result.analysis?.anomalies_count > 0 && (
-                    <span className="ml-2 text-orange-600">
-                      · {result.analysis.anomalies_count} anomalie{result.analysis.anomalies_count > 1 ? 's' : ''} détectée{result.analysis.anomalies_count > 1 ? 's' : ''}
-                    </span>
+            <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="font-semibold text-green-700 text-lg">
+                    ✅ Diagnostic terminé
+                  </h3>
+                  <p className="text-sm text-green-600 mt-1">
+                    {result.steps_count} étape{result.steps_count > 1 ? 's' : ''} analysée{result.steps_count > 1 ? 's' : ''}
+                    {result.analysis?.anomalies_count > 0 && (
+                      <span className="ml-2 text-orange-600">
+                        · {result.analysis.anomalies_count} anomalie{result.analysis.anomalies_count > 1 ? 's' : ''} détectée{result.analysis.anomalies_count > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {result.engine_used && (
+                    <EngineBadge engine={result.engine_used} size="sm" />
                   )}
-                </p>
+                  <button
+                    onClick={() => { setResult(null); setText('') }}
+                    className="text-xs text-gray-400 hover:text-gray-600"
+                  >
+                    Nouveau diagnostic
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={() => { setResult(null); setText('') }}
-                className="text-xs text-gray-400 hover:text-gray-600"
-              >
-                Nouveau diagnostic
-              </button>
             </div>
 
             {/* Scores */}

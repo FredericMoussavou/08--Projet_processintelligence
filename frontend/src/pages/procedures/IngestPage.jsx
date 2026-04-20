@@ -2,17 +2,21 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { proceduresAPI } from '../../services/api'
 import useAuthStore from '../../store/authStore'
+import MaskingToggle from '../../components/ui/MaskingToggle'
+import EngineBadge from '../../components/ui/EngineBadge'
 
 const MODES = [
   { key: 'text', label: 'Texte libre',  desc: 'Décrivez votre procédure en langage naturel' },
   { key: 'file', label: 'Fichier',      desc: 'PDF, Word, CSV ou TXT' },
 ]
 
-const CHANGE_TYPES = [
-  { value: 'patch', label: 'Correctif'  },
-  { value: 'minor', label: 'Mineur'     },
-  { value: 'major', label: 'Majeur'     },
-]
+// Doit correspondre à REQUIRED_CONSENT_KEYWORDS côté backend (procedures/services/consent.py)
+const DEFAULT_CONSENT_TEXT = (
+  "En désactivant le masquage des données personnelles, je consens " +
+  "au transfert de mon texte à Anthropic (États-Unis) pour analyse. " +
+  "Je certifie que ce texte ne contient pas de données personnelles " +
+  "réelles ou que j'ai le droit de les partager."
+)
 
 export default function IngestPage() {
   const navigate    = useNavigate()
@@ -20,15 +24,26 @@ export default function IngestPage() {
 
   const [mode,        setMode]        = useState('text')
   const [form,        setForm]        = useState({
-    title        : '',
-    service      : '',
-    apply_masking: true,
+    title         : '',
+    service       : '',
+    apply_masking : true,
+    consent_text  : '',
   })
   const [text,        setText]        = useState('')
   const [file,        setFile]        = useState(null)
   const [loading,     setLoading]     = useState(false)
   const [error,       setError]       = useState('')
   const [result,      setResult]      = useState(null)
+
+  const handleMaskingChange = (enabled, consentText) => {
+    setForm((prev) => ({
+      ...prev,
+      apply_masking: enabled,
+      // Si on désactive, on stocke le texte de consentement fourni par la modale
+      // Si on réactive, on vide
+      consent_text: enabled ? '' : (consentText || DEFAULT_CONSENT_TEXT),
+    }))
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -41,18 +56,20 @@ export default function IngestPage() {
       if (mode === 'text') {
         res = await proceduresAPI.ingest({
           text,
-          title         : form.title,
-          service       : form.service,
-          organization_id: currentOrg?.id || 1,
-          apply_masking : form.apply_masking,
+          title                 : form.title,
+          service               : form.service,
+          organization_id       : currentOrg?.id || 1,
+          apply_masking         : form.apply_masking,
+          masking_consent_text  : form.consent_text,
         })
       } else {
         const formData = new FormData()
-        formData.append('file',            file)
-        formData.append('title',           form.title)
-        formData.append('service',         form.service)
-        formData.append('organization_id', currentOrg?.id || 1)
-        formData.append('apply_masking',   form.apply_masking)
+        formData.append('file',                 file)
+        formData.append('title',                form.title)
+        formData.append('service',              form.service)
+        formData.append('organization_id',      currentOrg?.id || 1)
+        formData.append('apply_masking',        form.apply_masking)
+        formData.append('masking_consent_text', form.consent_text)
         res = await proceduresAPI.ingestFile(formData)
       }
 
@@ -66,15 +83,30 @@ export default function IngestPage() {
 
   // Résultat affiché après ingestion réussie
   if (result) {
+    const anomaliesCount = result.analysis?.anomalies_count || 0
     return (
       <div className="p-8 max-w-2xl mx-auto space-y-6">
         <div className="bg-green-50 border border-green-200 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-green-700 mb-1">
-            ✅ Procédure créée avec succès
-          </h3>
-          <p className="text-sm text-green-600">
-            {result.steps_count} étape{result.steps_count > 1 ? 's' : ''} extraite{result.steps_count > 1 ? 's' : ''}
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-green-700 mb-1">
+                ✅ Procédure créée avec succès
+              </h3>
+              <p className="text-sm text-green-600">
+                {result.steps_count} étape{result.steps_count > 1 ? 's' : ''} extraite{result.steps_count > 1 ? 's' : ''}
+              </p>
+            </div>
+            {result.engine_used && (
+              <EngineBadge engine={result.engine_used} />
+            )}
+          </div>
+
+          {/* Alerte quota */}
+          {result.quota?.quota_reached && (
+            <div className="mt-3 text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
+              Quota mensuel atteint. Cette analyse a été effectuée en mode standard.
+            </div>
+          )}
         </div>
 
         {/* Scores */}
@@ -102,9 +134,9 @@ export default function IngestPage() {
                 </div>
               ))}
             </div>
-            {result.analysis.anomalies_count > 0 && (
+            {anomaliesCount > 0 && (
               <p className="text-xs text-orange-600 mt-3">
-                ⚠️ {result.analysis.anomalies_count} anomalie{result.analysis.anomalies_count > 1 ? 's' : ''} détectée{result.analysis.anomalies_count > 1 ? 's' : ''}
+                ⚠️ {anomaliesCount} anomalie{anomaliesCount > 1 ? 's' : ''} détectée{anomaliesCount > 1 ? 's' : ''}
               </p>
             )}
           </div>
@@ -294,22 +326,11 @@ export default function IngestPage() {
         )}
 
         {/* Masquage RGPD */}
-        <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border border-light">
-          <input
-            type="checkbox"
-            id="masking"
-            checked={form.apply_masking}
-            onChange={(e) => setForm({ ...form, apply_masking: e.target.checked })}
-            className="w-4 h-4 accent-secondary"
+        <div className="p-4 bg-blue-50 rounded-xl border border-light">
+          <MaskingToggle
+            enabled={form.apply_masking}
+            onChange={handleMaskingChange}
           />
-          <div>
-            <label htmlFor="masking" className="text-sm font-medium text-primary cursor-pointer">
-              Masquage RGPD automatique
-            </label>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Les noms, emails et montants seront anonymisés avant analyse
-            </p>
-          </div>
         </div>
 
         <button
