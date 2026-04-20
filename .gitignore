@@ -50,3 +50,6 @@ template_processintelligence.csv
 
 # Fichiers générés localement pour diagnostic
 project_tree.txt
+
+# Pages de preview locales non committées
+frontend/src/pages/UIPreviewPage.jsx
