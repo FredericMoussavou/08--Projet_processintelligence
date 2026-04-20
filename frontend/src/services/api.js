@@ -142,6 +142,20 @@ export const changeRequestsAPI = {
 export const organizationsAPI = {
   theme: (slug) =>
     api.get(`/organizations/${slug}/theme/`),
+
+  /**
+   * Récupère le plan courant de l'organisation avec ses limites et features.
+   * Utilisé pour afficher le PlanBadge et griser les features non disponibles.
+   */
+  getPlan: (orgId) =>
+    api.get(`/organizations/${orgId}/plan/`),
+
+  /**
+   * Récupère l'usage courant de l'organisation (mois en cours).
+   * Utilisé pour afficher la QuotaBar dans DashboardHome et IngestPage.
+   */
+  getUsage: (orgId) =>
+    api.get(`/organizations/${orgId}/usage/`),
 }
 
 export default api

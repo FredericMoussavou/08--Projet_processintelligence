@@ -190,3 +190,167 @@ def add_service(request, org_id):
         'message': f"Service '{name}' enregistré",
         'service': name,
     })
+
+# -----------------------------------------------------------------------------
+# Helper de permission (peut être factorisé plus tard dans un module commun)
+# -----------------------------------------------------------------------------
+ 
+def _user_can_view_organization(user, organization):
+    """
+    Vérifie qu'un utilisateur a le droit de lire les infos d'une organisation.
+ 
+    Règle : l'utilisateur doit être membre (Membership) de l'organisation.
+    """
+    if not user or not user.is_authenticated:
+        return False
+    return Membership.objects.filter(
+        user=user,
+        organization=organization,
+    ).exists()
+ 
+ 
+# -----------------------------------------------------------------------------
+# GET /api/organizations/<id>/plan/
+# -----------------------------------------------------------------------------
+ 
+def get_organization_plan(request, org_id):
+    """
+    Retourne le plan courant de l'organisation, ses limites et ses features.
+    Utilisé par le frontend pour afficher les badges et griser les features
+    non disponibles dans le plan actuel.
+ 
+    Réponse :
+        {
+          "plan": {
+            "id": "pro",
+            "name": "Pro",
+            "description": "...",
+            "is_paid": true,
+            "limits": {...},
+            "features": {...}
+          },
+          "plan_started_at": "2026-04-01T10:00:00Z" | null,
+          "plan_expires_at": null
+        }
+    """
+    try:
+        org = Organization.objects.get(id=org_id)
+    except Organization.DoesNotExist:
+        return JsonResponse({'error': 'Organisation introuvable'}, status=404)
+ 
+    if not _user_can_view_organization(request.user, org):
+        return JsonResponse(
+            {'error': "Accès refusé : vous n'êtes pas membre de cette organisation"},
+            status=403,
+        )
+ 
+    # Configuration complète du plan (formatée pour exposition publique)
+    from organizations.plans import get_plan
+    plan_config = get_plan(org.plan)
+ 
+    plan_data = {
+        'id':          plan_config['id'],
+        'name':        plan_config['name'],
+        'description': plan_config['description'],
+        'is_paid':     plan_config['is_paid'],
+        'limits': {
+            'procedures':         plan_config['limit_procedures'],
+            'users':              plan_config['limit_users'],
+            'services':           plan_config['limit_services'],
+            'analyses_per_month': plan_config['limit_analyses_per_month'],
+        },
+        'features': {
+            'llm_enabled':       plan_config['llm_model'] is not None,
+            'export_pdf_themed': plan_config['feature_export_pdf_themed'],
+            'export_bpmn':       plan_config['feature_export_bpmn'],
+            'export_manual':     plan_config['feature_export_manual'],
+            'versioning':        plan_config['feature_versioning'],
+            'custom_theme':      plan_config['feature_custom_theme'],
+            'sso':               plan_config['feature_sso'],
+            'priority_support':  plan_config['feature_priority_support'],
+            'rules_sectors':     plan_config['feature_rules_sectors'],
+        },
+    }
+ 
+    return JsonResponse({
+        'plan':            plan_data,
+        'plan_started_at': org.plan_started_at.isoformat() if org.plan_started_at else None,
+        'plan_expires_at': org.plan_expires_at.isoformat() if org.plan_expires_at else None,
+    })
+ 
+ 
+# -----------------------------------------------------------------------------
+# GET /api/organizations/<id>/usage/
+# -----------------------------------------------------------------------------
+ 
+def get_organization_usage(request, org_id):
+    """
+    Retourne l'usage courant de l'organisation pour le mois en cours.
+    Utilisé par le frontend pour afficher la QuotaBar et les indicateurs
+    de consommation (procédures, utilisateurs, analyses).
+ 
+    Réponse :
+        {
+          "month": 4,
+          "year": 2026,
+          "analyses": {
+            "count": 42,
+            "limit": 500,
+            "percentage_used": 8.4,
+            "quota_reached": false
+          },
+          "procedures": { "count": 15, "limit": 100 },
+          "users":      { "count": 8,  "limit": 15 }
+        }
+    """
+    from django.utils import timezone
+ 
+    try:
+        org = Organization.objects.get(id=org_id)
+    except Organization.DoesNotExist:
+        return JsonResponse({'error': 'Organisation introuvable'}, status=404)
+ 
+    if not _user_can_view_organization(request.user, org):
+        return JsonResponse(
+            {'error': "Accès refusé : vous n'êtes pas membre de cette organisation"},
+            status=403,
+        )
+ 
+    now = timezone.now()
+ 
+    # Analyses du mois (compteur MonthlyUsage)
+    analyses_count = org.get_monthly_analyses_count()
+    analyses_limit = org.limit_for('analyses_per_month')
+    if analyses_limit is not None and analyses_limit > 0:
+        percentage = round((analyses_count / analyses_limit) * 100, 1)
+        quota_reached = analyses_count >= analyses_limit
+    else:
+        percentage = 0.0
+        quota_reached = False
+ 
+    # Nombre de procédures actuelles
+    procedures_count = org.procedures.count()
+    procedures_limit = org.limit_for('procedures')
+ 
+    # Nombre d'utilisateurs actuels
+    users_count = org.memberships.count()
+    users_limit = org.limit_for('users')
+ 
+    return JsonResponse({
+        'month': now.month,
+        'year':  now.year,
+        'analyses': {
+            'count':           analyses_count,
+            'limit':           analyses_limit,
+            'percentage_used': percentage,
+            'quota_reached':   quota_reached,
+        },
+        'procedures': {
+            'count': procedures_count,
+            'limit': procedures_limit,
+        },
+        'users': {
+            'count': users_count,
+            'limit': users_limit,
+        },
+    })

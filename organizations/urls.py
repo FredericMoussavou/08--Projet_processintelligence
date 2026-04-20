@@ -3,6 +3,8 @@ from organizations import views
 
 urlpatterns = [
     path('<slug:slug>/theme/',                  views.get_organization_theme,    name='organization_theme'),
+    path('<int:org_id>/plan/',                  views.get_organization_plan,     name='organization_plan'),
+    path('<int:org_id>/usage/',                 views.get_organization_usage,    name='organization_usage'),
     path('<int:org_id>/members/',               views.get_members,               name='get_members'),
     path('<int:org_id>/members/add/',           views.manage_members,            name='manage_members'),
     path('<int:org_id>/members/<int:user_id>/', views.remove_member,             name='remove_member'),
